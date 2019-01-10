@@ -1,5 +1,4 @@
 # Elastos.ORG.DID.Explorer.Api
-==============
 ## Summary
 
 This repo provide HTTP Restful API for DID explorer.
