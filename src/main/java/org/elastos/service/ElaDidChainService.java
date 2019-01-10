@@ -87,9 +87,9 @@ public class ElaDidChainService {
         }
 
         if (status == normal) {
-            propertySet.removeIf(property -> property.getPropertyStatus().equals("1"));
-        } else if (status == InputDidStatus.deprecated) {
             propertySet.removeIf(property -> property.getPropertyStatus().equals("0"));
+        } else if (status == InputDidStatus.deprecated) {
+            propertySet.removeIf(property -> property.getPropertyStatus().equals("1"));
         }
 
         if (!propertySet.isEmpty()) {
@@ -206,6 +206,7 @@ public class ElaDidChainService {
 
     private String detailedPropertiesToJson(List<ChainDidProperty> properties, Integer page, Integer size) {
         properties.forEach(pro -> pro.setPropertyStatus(pro.getPropertyStatus().equals("1")? DidStatus.Normal.toString(): DidStatus.Deprecated.toString()));
+        properties.forEach(pro -> pro.setDidStatus(pro.getDidStatus().equals("1")? DidStatus.Normal.toString(): DidStatus.Deprecated.toString()));
         if (null == page) {
             return JSON.toJSONString(properties);
         } else {
