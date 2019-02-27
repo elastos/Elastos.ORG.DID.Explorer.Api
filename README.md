@@ -38,9 +38,19 @@ $uname java -jar did.backend.service-0.0.6.jar
 ## Web Service APIs
 
 ### Get all properties of a did
-```url
-/api/1/didexplorer/did/{did}[/status/{all/normal/deprecated}][?page={page_number}&&size={size_number}&&detailed={true/false}]
+```yaml
+HTTP: GET
+URL: /api/1/didexplorer/did/{did}[/status/{all/normal/deprecated}][?page={page_number}&size={size_number}&detailed={true/false}]
+HEADERS:
+    Content-Type: application/json
+return:
+    成功: {
+            "status":200,
+            "result": [{\"key\":\"del_in_middle\",\"value\":\"test_1543817023\"},{\"key\":\"123\",\"value\":\"test_1543817020\"},{\"key\":\"del_in_end\",\"value\":\"test_1543817024\"},{\"key\":\"wid\",\"value\":\"100000380\"},{\"key\":\"publicKey\",\"value\":\"02EB87E5147DB8CA09B3A65FC2EA2E650982726A25ADB0856C73AAA23395D69CD9\"}
+         };
+    失败: {"status":400, "result":"Err msg"}
 ```
+
 We can get all properties of did from this api. But if the did is deprecated, there will be return a empty string in result.
 
 For example we get from our local service like this:
@@ -65,14 +75,24 @@ If Success, we will get response like:
 ```
 
 ### Get property value of a did property
-```url
-/api/1/didexplorer/did/{did}/property/{property_key}
+```yaml
+HTTP: GET
+URL: /api/1/didexplorer/did/{did}/property?key={key_name}
+HEADERS:
+    Content-Type: application/json
+return:
+    成功: {
+        "status": 200,
+        "result": [{\"key\":\"property_key_1\",\"value\":\"test_1543817023\"}]
+        }
+    失败: {"status":400, "result":"Err msg"}
 ```
+
 We can get property of did from this api.
 
 For example we get from our local service like this:
 ```url
-http://localhost:8093/api/1/didexplorer/did/ijZ71xbJ7tduDybqRSEHgjaRtKzBNcJdJt/property/property_key_name
+http://localhost:8093/api/1/didexplorer/did/ijZ71xbJ7tduDybqRSEHgjaRtKzBNcJdJt/property?key=property_key_name
 ```
 If Success, we will get property value of property "property_key_name" in did "ijZ71xbJ7tduDybqRSEHgjaRtKzBNcJdJt"
 
@@ -85,14 +105,24 @@ It response like:
 ```
 
 ### Get all property value history of a did property
-```url
-/api/1/didexplorer/did/{did}/property_history/{property_key}[?page={page_number}&&size={size_number}]
+```yaml
+HTTP: GET
+URL: /api/1/didexplorer/did/{did}/property_history?key={key_name}[&page={page_number}&size={size_number}]
+HEADERS:
+    Content-Type: application/json
+return:
+    成功: {
+        "status":200,
+        "result":  [{\"key\":\"property_key_1\",\"value\":\"02EB87E5147DB8CA09B3A65FC2EA2E650982726A25ADB0856C73AAA23395D69CD9\"},{\"key\":\"property_key_1\",\"value\":\"02EB87E5147DB8CA09B3A65FC2EA2E650982726A25ADB0856C73AAA23395D69CD9\"}]
+    }
+    失败: {"status":400, "result":"Err msg"}
 ```
+
 We can get all history of a did property from this api.
 
 For example we get from our local service like this:
 ```url
-http://localhost:8093/api/1/didexplorer/did/ijZ71xbJ7tduDybqRSEHgjaRtKzBNcJdJt/property_history/property_key_name?page=3&&size=2
+http://localhost:8093/api/1/didexplorer/did/ijZ71xbJ7tduDybqRSEHgjaRtKzBNcJdJt/property_history?key=property_key_name&page=3&size=2
 ```
 If Success, we will get history of property "property_key_name" in did "ijZ71xbJ7tduDybqRSEHgjaRtKzBNcJdJt", in page 3.
 

@@ -86,6 +86,24 @@ public class ElaDidChainController {
         return JSON.toJSONString(ret);
     }
 
+    @RequestMapping(value = "did/{did}/property", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String getDIDPropertyValueByParam(@PathVariable("did") String did,
+                                      @RequestParam(name ="key") String propertyKey) {
+        ReturnMsgEntity ret = didChainService.getDIDPropertyValue(did, propertyKey);
+        return JSON.toJSONString(ret);
+    }
+
+    @RequestMapping(value = "did/{did}/property_history", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String getDIDPropertyHistoryByParam(@PathVariable("did") String did,
+                                        @RequestParam(name = "key") String propertyKey,
+                                        @RequestParam(required = false, name = "page") Integer page,
+                                        @RequestParam(required = false, name = "size") Integer size) {
+        ReturnMsgEntity ret = didChainService.getDIDPropertyHistory(did, propertyKey, page, size);
+        return JSON.toJSONString(ret);
+    }
+
     @RequestMapping(value = "echo", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public String echo(@RequestBody String body) {
