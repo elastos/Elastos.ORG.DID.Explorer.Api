@@ -50,7 +50,7 @@ public class ElaDidChainController {
 
     }
 
-    @RequestMapping(value = {"did/{did}", "did/{did}/status/{status}"}, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = {"did/{did}", "did/{did}/status/{status}"}, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public String getDIDProperties(@PathVariable("did") String did,
                                    @PathVariable(required = false, name = "status") InputDidStatus status,
@@ -68,7 +68,7 @@ public class ElaDidChainController {
         return JSON.toJSONString(ret);
     }
 
-    @RequestMapping(value = "did/{did}/property/{property_key}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "did/{did}/property/{property_key}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public String getDIDPropertyValue(@PathVariable("did") String did,
                                       @PathVariable("property_key") String propertyKey) {
@@ -76,7 +76,7 @@ public class ElaDidChainController {
         return JSON.toJSONString(ret);
     }
 
-    @RequestMapping(value = "did/{did}/property_history/{property_key}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "did/{did}/property_history/{property_key}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public String getDIDPropertyHistory(@PathVariable("did") String did,
                                         @PathVariable("property_key") String propertyKey,
@@ -86,7 +86,7 @@ public class ElaDidChainController {
         return JSON.toJSONString(ret);
     }
 
-    @RequestMapping(value = "did/{did}/property", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "did/{did}/property", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public String getDIDPropertyValueByParam(@PathVariable("did") String did,
                                       @RequestParam(name ="key") String propertyKey) {
@@ -94,7 +94,7 @@ public class ElaDidChainController {
         return JSON.toJSONString(ret);
     }
 
-    @RequestMapping(value = "did/{did}/property_history", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "did/{did}/property_history", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public String getDIDPropertyHistoryByParam(@PathVariable("did") String did,
                                         @RequestParam(name = "key") String propertyKey,
