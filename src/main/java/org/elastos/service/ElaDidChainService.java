@@ -1,6 +1,8 @@
 package org.elastos.service;
 
 import com.alibaba.fastjson.JSON;
+import org.apache.commons.beanutils.PropertyUtils;
+import org.elastos.POJO.ChainDetailedDidProperty;
 import org.elastos.POJO.DidProperty;
 import org.elastos.POJO.DidStatus;
 import org.elastos.POJO.InputDidStatus;
@@ -79,7 +81,7 @@ public class ElaDidChainService {
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
 
-        Set<ChainDidProperty> propertySet = new HashSet<>();
+        Set<ChainDetailedDidProperty> propertySet = new HashSet<>();
         if (!filterValidDidDetailedProperties(onChainProperties, null, propertySet)) {
             logger.debug("getDIDDetailedProperties The did is deprecated. did = {},status={}", did, status);
             System.out.println("getDIDDetailedProperties The did is deprecated. did=" + did + ",status=" + status);
@@ -204,7 +206,7 @@ public class ElaDidChainService {
         }
     }
 
-    private String detailedPropertiesToJson(List<ChainDidProperty> properties, Integer page, Integer size) {
+    private String detailedPropertiesToJson(List<ChainDetailedDidProperty> properties, Integer page, Integer size) {
         properties.forEach(pro -> pro.setPropertyStatus(pro.getPropertyStatus().equals("1")? DidStatus.Normal.toString(): DidStatus.Deprecated.toString()));
         properties.forEach(pro -> pro.setDidStatus(pro.getDidStatus().equals("1")? DidStatus.Normal.toString(): DidStatus.Deprecated.toString()));
         if (null == page) {
@@ -213,22 +215,24 @@ public class ElaDidChainService {
             Pageable pageable = PageRequest.of(page, (null == size) ? 20 : size);
             int start = (int)pageable.getOffset();
             int end = (start + pageable.getPageSize()) > properties.size() ? properties.size() : (start + pageable.getPageSize());
-            List<ChainDidProperty> subList = properties.subList(start, end);
+            List<ChainDetailedDidProperty> subList = properties.subList(start, end);
             return JSON.toJSONString(subList);
         }
     }
 
-    private boolean filterValidDidDetailedProperties(List<ChainDidProperty> propertyDescList, String propertyKey, Collection<ChainDidProperty> properties) {
+    private boolean filterValidDidDetailedProperties(List<ChainDidProperty> propertyDescList, String propertyKey, Collection<ChainDetailedDidProperty> properties) {
         //Every time has to
         for (ChainDidProperty p : propertyDescList) {
             if ("1".equals(p.getDidStatus())) {
                 //If propertyKey is null, means get all properties.
                 if (null == propertyKey) {
-                    properties.add(p);
+                    ChainDetailedDidProperty pro = new ChainDetailedDidProperty(p);
+                    properties.add(pro);
                 } else {
                     //If has propertyKey, we filter the just property.
                     if (propertyKey.equals(p.getPropertyKey())) {
-                        properties.add(p);
+                        ChainDetailedDidProperty pro = new ChainDetailedDidProperty(p);
+                        properties.add(pro);
                     }
                 }
             } else {
