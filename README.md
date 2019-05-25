@@ -104,6 +104,36 @@ It response like:
 }
 ```
 
+### Get property value of all did property
+```yaml
+HTTP: GET
+URL: /api/1/didexplorer/property?key={key_name}[&page={page_number}&size={size_number}]
+HEADERS:
+    Content-Type: application/json
+return:
+    成功: {
+        "status": 200,
+        "result": [{\"did\":\"ijZ71xbJ7tduDybqRSEHgjaRtKzBNcJdJt\",\"key\":\"property_key_1\",\"value\":\"test_1543817023\"}]
+        }
+    失败: {"status":400, "result":"Err msg"}
+```
+
+We can get property of did from this api.
+
+For example we get from our local service like this:
+```url
+http://localhost:8093/api/1/didexplorer/did/ijZ71xbJ7tduDybqRSEHgjaRtKzBNcJdJt/property?key=property_key_name
+```
+If Success, we will get property value of property "property_key_name" in did "ijZ71xbJ7tduDybqRSEHgjaRtKzBNcJdJt"
+
+It response like:
+```json
+{
+    "result": "[{\"key\":\"property_key_name\",\"value\":\"test_1543817023\"}]",
+    "status": 200
+}
+```
+
 ### Get all property value history of a did property
 ```yaml
 HTTP: GET

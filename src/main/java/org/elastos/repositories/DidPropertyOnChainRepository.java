@@ -13,4 +13,6 @@ public interface DidPropertyOnChainRepository extends JpaRepository<ChainDidProp
     List<ChainDidProperty> findByDidAndPropertyKey(String did, String propertyKey, Sort sort);
 
     List<ChainDidProperty> findByDid(String did, Sort sort);
+
+    List<ChainDidProperty> findByPropertyKey(String propertyKey, Sort sort);
 }

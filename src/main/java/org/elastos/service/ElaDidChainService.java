@@ -1,11 +1,7 @@
 package org.elastos.service;
 
 import com.alibaba.fastjson.JSON;
-import org.apache.commons.beanutils.PropertyUtils;
-import org.elastos.POJO.ChainDetailedDidProperty;
-import org.elastos.POJO.DidProperty;
-import org.elastos.POJO.DidStatus;
-import org.elastos.POJO.InputDidStatus;
+import org.elastos.POJO.*;
 import org.elastos.conf.NodeConfiguration;
 import org.elastos.conf.RetCodeConfiguration;
 import org.elastos.entity.ChainDidProperty;
@@ -17,7 +13,9 @@ import org.elastos.util.HttpKit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -72,7 +70,7 @@ public class ElaDidChainService {
     }
 
     public ReturnMsgEntity getDIDDetailedProperties(String did, InputDidStatus status, Integer page, Integer size) {
-        Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "txid");
+        Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "id");
 
         List<ChainDidProperty> onChainProperties = didPropertyOnChainRepository.findByDid(did, sort);
         if ((null == onChainProperties) || (onChainProperties.isEmpty())) {
@@ -105,7 +103,7 @@ public class ElaDidChainService {
     }
 
     public ReturnMsgEntity getDIDProperties(String did, InputDidStatus status, Integer page, Integer size) {
-        Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "txid");
+        Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "id");
 
         List<ChainDidProperty> onChainProperties = didPropertyOnChainRepository.findByDid(did, sort);
         if ((null == onChainProperties) || (onChainProperties.isEmpty())) {
@@ -139,7 +137,7 @@ public class ElaDidChainService {
     }
 
     public ReturnMsgEntity getDIDPropertyValue(String did, String propertyKey) {
-        Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "txid");
+        Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "id");
         List<ChainDidProperty> onChainProperties = didPropertyOnChainRepository.findByDid(did, sort);
         if ((null == onChainProperties) || (onChainProperties.isEmpty())) {
             logger.debug("getDIDPropertyValue There is no data in database. did = {},propertyKey={}", did, propertyKey);
@@ -168,7 +166,7 @@ public class ElaDidChainService {
     }
 
     public ReturnMsgEntity getDIDPropertyHistory(String did, String propertyKey, Integer page, Integer size) {
-        Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "txid");
+        Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "id");
         List<ChainDidProperty> onChainProperties = didPropertyOnChainRepository.findByDid(did, sort);
         if ((null == onChainProperties) || (onChainProperties.isEmpty())) {
             logger.debug("getDIDPropertyHistory There is no data in database. did = {},propertyKey={}", did, propertyKey);
@@ -199,7 +197,7 @@ public class ElaDidChainService {
             return JSON.toJSONString(properties);
         } else {
             Pageable pageable = PageRequest.of(page, (null == size) ? 20 : size);
-            int start = (int)pageable.getOffset();
+            int start = (int) pageable.getOffset();
             int end = (start + pageable.getPageSize()) > properties.size() ? properties.size() : (start + pageable.getPageSize());
             List<DidProperty> subList = properties.subList(start, end);
             return JSON.toJSONString(subList);
@@ -207,13 +205,13 @@ public class ElaDidChainService {
     }
 
     private String detailedPropertiesToJson(List<ChainDetailedDidProperty> properties, Integer page, Integer size) {
-        properties.forEach(pro -> pro.setPropertyStatus(pro.getPropertyStatus().equals("1")? DidStatus.Normal.toString(): DidStatus.Deprecated.toString()));
-        properties.forEach(pro -> pro.setDidStatus(pro.getDidStatus().equals("1")? DidStatus.Normal.toString(): DidStatus.Deprecated.toString()));
+        properties.forEach(pro -> pro.setPropertyStatus(pro.getPropertyStatus().equals("1") ? DidStatus.Normal.toString() : DidStatus.Deprecated.toString()));
+        properties.forEach(pro -> pro.setDidStatus(pro.getDidStatus().equals("1") ? DidStatus.Normal.toString() : DidStatus.Deprecated.toString()));
         if (null == page) {
             return JSON.toJSONString(properties);
         } else {
             Pageable pageable = PageRequest.of(page, (null == size) ? 20 : size);
-            int start = (int)pageable.getOffset();
+            int start = (int) pageable.getOffset();
             int end = (start + pageable.getPageSize()) > properties.size() ? properties.size() : (start + pageable.getPageSize());
             List<ChainDetailedDidProperty> subList = properties.subList(start, end);
             return JSON.toJSONString(subList);
@@ -269,10 +267,76 @@ public class ElaDidChainService {
         didProperty.setKey(p.getPropertyKey());
         didProperty.setValue(p.getPropertyValue());
         if ("1".equals(p.getPropertyStatus())) {
-            didProperty.setStatus(normal);
+            didProperty.setStatus(InputDidStatus.normal);
         } else {
             didProperty.setStatus(InputDidStatus.deprecated);
         }
         properties.add(didProperty);
     }
+
+    public ReturnMsgEntity getAllPropertyValue(String propertyKey, Integer page, Integer size) {
+        Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "id");
+
+        List<ChainDidProperty> onChainProperties = didPropertyOnChainRepository.findByPropertyKey(propertyKey, sort);
+        if ((null == onChainProperties) || (onChainProperties.isEmpty())) {
+            logger.debug("getAllPropertyValue There is no data in database. property= {},status={}", propertyKey);
+            return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
+        }
+
+        Set<PropertyOfDid> propertySet = new HashSet<>();
+        if (!filterValidPropertiesOfDid(onChainProperties, propertySet)) {
+            logger.debug("getDIDProperties The did is deprecated. property = {}", propertyKey);
+            return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
+        }
+
+        //We only took the valid
+        propertySet.removeIf(property -> property.getStatus() == InputDidStatus.deprecated);
+
+        if (!propertySet.isEmpty()) {
+            String ret = propertiesOfDidToJson(new ArrayList<>(propertySet), page, size);
+            return new ReturnMsgEntity().setResult(ret).setStatus(retCodeConfiguration.SUCC());
+        } else {
+            logger.debug("getAllPropertyValue There is no property data . property = {}", propertyKey);
+            return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
+        }
+    }
+
+    private boolean filterValidPropertiesOfDid(List<ChainDidProperty> propertyDescList, Collection<PropertyOfDid> properties) {
+        //Every time has to
+        for (ChainDidProperty p : propertyDescList) {
+            if ("1".equals(p.getDidStatus())) {
+                savePropertyOfDid(properties, p);
+            }
+        }
+        return true;
+    }
+
+    private void savePropertyOfDid(Collection<PropertyOfDid> properties, ChainDidProperty p) {
+        PropertyOfDid didProperty = new PropertyOfDid();
+        didProperty.setDid(p.getDid());
+        didProperty.setKey(p.getPropertyKey());
+        didProperty.setValue(p.getPropertyValue());
+        //There is more than one property data for a did. we only took the latest one.
+        if ("1".equals(p.getPropertyStatus())) {
+            didProperty.setStatus(InputDidStatus.normal);
+        } else {
+            didProperty.setStatus(InputDidStatus.deprecated);
+        }
+        properties.add(didProperty);
+    }
+
+    private String propertiesOfDidToJson(List<PropertyOfDid> properties, Integer page, Integer size) {
+        //clean status, do not output it for user.
+        properties.forEach(pro -> pro.setStatus(null));
+        if (null == page) {
+            return JSON.toJSONString(properties);
+        } else {
+            Pageable pageable = PageRequest.of(page, (null == size) ? 20 : size);
+            int start = (int) pageable.getOffset();
+            int end = (start + pageable.getPageSize()) > properties.size() ? properties.size() : (start + pageable.getPageSize());
+            List<PropertyOfDid> subList = properties.subList(start, end);
+            return JSON.toJSONString(subList);
+        }
+    }
+
 }
