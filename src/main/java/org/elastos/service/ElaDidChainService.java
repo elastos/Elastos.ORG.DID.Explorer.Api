@@ -2,14 +2,10 @@ package org.elastos.service;
 
 import com.alibaba.fastjson.JSON;
 import org.elastos.POJO.*;
-import org.elastos.conf.NodeConfiguration;
 import org.elastos.conf.RetCodeConfiguration;
-import org.elastos.entity.ChainDidProperty;
-import org.elastos.entity.ChainType;
-import org.elastos.entity.RawTxEntity;
-import org.elastos.entity.ReturnMsgEntity;
+import org.elastos.entity.*;
+import org.elastos.repositories.DidAppOnChainRepository;
 import org.elastos.repositories.DidPropertyOnChainRepository;
-import org.elastos.util.HttpKit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,13 +21,6 @@ import static org.elastos.POJO.InputDidStatus.normal;
 
 @Service
 public class ElaDidChainService {
-    public enum ReqMethod {
-        GET,
-        POST
-    }
-
-    @Autowired
-    private NodeConfiguration nodeConfiguration;
 
     @Autowired
     private RetCodeConfiguration retCodeConfiguration;
@@ -39,50 +28,25 @@ public class ElaDidChainService {
     @Autowired
     private DidPropertyOnChainRepository didPropertyOnChainRepository;
 
+    @Autowired
+    private DidAppOnChainRepository didAppOnChainRepository;
+
     private static Logger logger = LoggerFactory.getLogger(ElaDidChainService.class);
 
-    public String getUtxosByAddr(String address, ChainType type) {
-        String ret = elaReqChainData(ReqMethod.GET, nodeConfiguration.getUtxoByAddr(type), address);
-        return ret;
-    }
-
-    public String sendTransaction(RawTxEntity rawTx, ChainType type) {
-        String jsonEntity = JSON.toJSONString(rawTx);
-        String ret = elaReqChainData(ReqMethod.POST, nodeConfiguration.sendRawTransaction(type), jsonEntity);
-        return ret;
-    }
-
-    public String getTransaction(String txId, ChainType type) {
-        String ret = elaReqChainData(ReqMethod.GET, nodeConfiguration.getTransaction(type), txId);
-        return ret;
-    }
-
-    private String elaReqChainData(ReqMethod method, String url, String data) {
-        if (ReqMethod.GET == method) {
-            String str = url;
-            if (null != data) {
-                str += data;
-            }
-            return HttpKit.get(str);
-        } else {
-            return HttpKit.post(url, data);
-        }
-    }
-
-    public ReturnMsgEntity getDIDDetailedProperties(String did, InputDidStatus status, Integer page, Integer size) {
+    public ReturnMsgEntity getDetailedPropertiesOfDid(String did, InputDidStatus status, Integer page, Integer size) {
         Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "id");
 
         List<ChainDidProperty> onChainProperties = didPropertyOnChainRepository.findByDid(did, sort);
         if ((null == onChainProperties) || (onChainProperties.isEmpty())) {
-            logger.debug("getDIDDetailedProperties There is no data in database. did = {},status={}", did, status);
-            System.out.println("getDIDDetailedProperties There is no data in database. did=" + did + ",status=" + status);
+            logger.debug("getDetailedPropertiesOfDid There is no data in database. did = {},status={}", did, status);
+            System.out.println("getDetailedPropertiesOfDid There is no data in database. did=" + did + ",status=" + status);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
 
         Set<ChainDetailedDidProperty> propertySet = new HashSet<>();
         if (!filterValidDidDetailedProperties(onChainProperties, null, propertySet)) {
-            logger.debug("getDIDDetailedProperties The did is deprecated. did = {},status={}", did, status);
-            System.out.println("getDIDDetailedProperties The did is deprecated. did=" + did + ",status=" + status);
+            logger.debug("getDetailedPropertiesOfDid The did is deprecated. did = {},status={}", did, status);
+            System.out.println("getDetailedPropertiesOfDid The did is deprecated. did=" + did + ",status=" + status);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
 
@@ -96,26 +60,26 @@ public class ElaDidChainService {
             String ret = detailedPropertiesToJson(new ArrayList<>(propertySet), page, size);
             return new ReturnMsgEntity().setResult(ret).setStatus(retCodeConfiguration.SUCC());
         } else {
-            logger.debug("getDIDDetailedProperties There is no property data . did = {},status={}", did, status);
-            System.out.println("getDIDDetailedProperties There is no property data. did=" + did + ",status=" + status);
+            logger.debug("getDetailedPropertiesOfDid There is no property data . did = {},status={}", did, status);
+            System.out.println("getDetailedPropertiesOfDid There is no property data. did=" + did + ",status=" + status);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
     }
 
-    public ReturnMsgEntity getDIDProperties(String did, InputDidStatus status, Integer page, Integer size) {
+    public ReturnMsgEntity getPropertiesOfDid(String did, InputDidStatus status, Integer page, Integer size) {
         Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "id");
 
         List<ChainDidProperty> onChainProperties = didPropertyOnChainRepository.findByDid(did, sort);
         if ((null == onChainProperties) || (onChainProperties.isEmpty())) {
-            logger.debug("getDIDProperties There is no data in database. did = {},status={}", did, status);
-            System.out.println("getDIDProperties There is no data in database. did=" + did + ",status=" + status);
+            logger.debug("getPropertiesOfDid There is no data in database. did = {},status={}", did, status);
+            System.out.println("getPropertiesOfDid There is no data in database. did=" + did + ",status=" + status);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
 
         Set<DidProperty> propertySet = new HashSet<>();
         if (!filterValidDidProperties(onChainProperties, null, propertySet)) {
-            logger.debug("getDIDProperties The did is deprecated. did = {},status={}", did, status);
-            System.out.println("getDIDProperties The did is deprecated. did=" + did + ",status=" + status);
+            logger.debug("getPropertiesOfDid The did is deprecated. did = {},status={}", did, status);
+            System.out.println("getPropertiesOfDid The did is deprecated. did=" + did + ",status=" + status);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
 
@@ -130,26 +94,26 @@ public class ElaDidChainService {
             String ret = propertiesToJson(new ArrayList<>(propertySet), page, size);
             return new ReturnMsgEntity().setResult(ret).setStatus(retCodeConfiguration.SUCC());
         } else {
-            logger.debug("getDIDProperties There is no property data . did = {},status={}", did, status);
-            System.out.println("getDIDProperties There is no property data. did=" + did + ",status=" + status);
+            logger.debug("getPropertiesOfDid There is no property data . did = {},status={}", did, status);
+            System.out.println("getPropertiesOfDid There is no property data. did=" + did + ",status=" + status);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
     }
 
-    public ReturnMsgEntity getDIDPropertyValue(String did, String propertyKey) {
+    public ReturnMsgEntity getDIDProperty(String did, String propertyKey) {
         Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "id");
         List<ChainDidProperty> onChainProperties = didPropertyOnChainRepository.findByDid(did, sort);
         if ((null == onChainProperties) || (onChainProperties.isEmpty())) {
-            logger.debug("getDIDPropertyValue There is no data in database. did = {},propertyKey={}", did, propertyKey);
-            System.out.println("getDIDPropertyValue There is no data in database. did=" + did + ",status=" + propertyKey);
+            logger.debug("getDIDProperty There is no data in database. did = {},propertyKey={}", did, propertyKey);
+            System.out.println("getDIDProperty There is no data in database. did=" + did + ",status=" + propertyKey);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
 
         //Use database descendant list and Set filter the latest data in property.
         Set<DidProperty> propertySet = new HashSet<>();
         if (!filterValidDidProperties(onChainProperties, propertyKey, propertySet)) {
-            logger.debug("getDIDPropertyValue The did is deprecated. did = {},propertyKey={}", did, propertyKey);
-            System.out.println("getDIDPropertyValue The did is deprecated. did=" + did + ",status=" + propertyKey);
+            logger.debug("getDIDProperty The did is deprecated. did = {},propertyKey={}", did, propertyKey);
+            System.out.println("getDIDProperty The did is deprecated. did=" + did + ",status=" + propertyKey);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
 
@@ -159,8 +123,8 @@ public class ElaDidChainService {
             String ret = propertiesToJson(new ArrayList<>(propertySet), null, null);
             return new ReturnMsgEntity().setResult(ret).setStatus(retCodeConfiguration.SUCC());
         } else {
-            logger.debug("getDIDPropertyValue There is no property data. did = {},propertyKey={}", did, propertyKey);
-            System.out.println("getDIDPropertyValue There is no property data. did=" + did + ",status=" + propertyKey);
+            logger.debug("getDIDProperty There is no property data. did = {},propertyKey={}", did, propertyKey);
+            System.out.println("getDIDProperty There is no property data. did=" + did + ",status=" + propertyKey);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
     }
@@ -170,7 +134,7 @@ public class ElaDidChainService {
         List<ChainDidProperty> onChainProperties = didPropertyOnChainRepository.findByDid(did, sort);
         if ((null == onChainProperties) || (onChainProperties.isEmpty())) {
             logger.debug("getDIDPropertyHistory There is no data in database. did = {},propertyKey={}", did, propertyKey);
-            System.out.println("getDIDPropertyHistory getDIDPropertyValue There is no data in database. did=" + did + ",status=" + propertyKey);
+            System.out.println("getDIDPropertyHistory getDIDProperty There is no data in database. did=" + did + ",status=" + propertyKey);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
 
@@ -186,6 +150,60 @@ public class ElaDidChainService {
         } else {
             logger.debug("getDIDPropertyHistory There is no property data . did = {},propertyKey={}", did, propertyKey);
             System.out.println("getDIDPropertyHistory There is no property data. did=" + did + ",status=" + propertyKey);
+            return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
+        }
+    }
+
+    public ReturnMsgEntity getDIDPropertyLike(String did, String propertyKey) {
+        Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "id");
+        List<ChainDidProperty> onChainProperties = didPropertyOnChainRepository.findByDid(did, sort);
+        if ((null == onChainProperties) || (onChainProperties.isEmpty())) {
+            logger.debug("getDIDPropertyLike There is no data in database. did = {},propertyKey={}", did, propertyKey);
+            System.out.println("getDIDPropertyLike There is no data in database. did=" + did + ",status=" + propertyKey);
+            return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
+        }
+
+        //Use database descendant list and Set filter the latest data in property.
+        Set<DidProperty> propertySet = new HashSet<>();
+        if (!filterValidDidPropertiesLike(onChainProperties, propertyKey, propertySet)) {
+            logger.debug("getDIDPropertyLike The did is deprecated. did = {},propertyKey={}", did, propertyKey);
+            System.out.println("getDIDPropertyLike The did is deprecated. did=" + did + ",status=" + propertyKey);
+            return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
+        }
+
+        propertySet.removeIf(property -> property.getStatus() == InputDidStatus.deprecated);
+
+        if (!propertySet.isEmpty()) {
+            String ret = propertiesToJson(new ArrayList<>(propertySet), null, null);
+            return new ReturnMsgEntity().setResult(ret).setStatus(retCodeConfiguration.SUCC());
+        } else {
+            logger.debug("getDIDPropertyLike There is no property data. did = {},propertyKey={}", did, propertyKey);
+            System.out.println("getDIDPropertyLike There is no property data. did=" + did + ",status=" + propertyKey);
+            return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
+        }
+    }
+
+    public ReturnMsgEntity getDIDPropertyHistoryLike(String did, String propertyKey, Integer page, Integer size) {
+        Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "id");
+        List<ChainDidProperty> onChainProperties = didPropertyOnChainRepository.findByDid(did, sort);
+        if ((null == onChainProperties) || (onChainProperties.isEmpty())) {
+            logger.debug("getDIDPropertyHistoryLike There is no data in database. did = {},propertyKey={}", did, propertyKey);
+            System.out.println("getDIDPropertyHistoryLike getDIDProperty There is no data in database. did=" + did + ",status=" + propertyKey);
+            return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
+        }
+
+        List<DidProperty> properties = new ArrayList<>();
+        if (!filterValidDidPropertiesLike(onChainProperties, propertyKey, properties)) {
+            logger.debug("getDIDPropertyHistoryLike The did is deprecated. did = {},propertyKey={}", did, propertyKey);
+            System.out.println("getDIDPropertyHistoryLike The did is deprecated. did=" + did + ",status=" + propertyKey);
+            return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
+        }
+        if (!properties.isEmpty()) {
+            String ret = propertiesToJson(properties, page, size);
+            return new ReturnMsgEntity().setResult(ret).setStatus(retCodeConfiguration.SUCC());
+        } else {
+            logger.debug("getDIDPropertyHistoryLike There is no property data . did = {},propertyKey={}", did, propertyKey);
+            System.out.println("getDIDPropertyHistoryLike There is no property data. did=" + did + ",status=" + propertyKey);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
     }
@@ -241,6 +259,21 @@ public class ElaDidChainService {
         return true;
     }
 
+    private boolean filterValidDidPropertiesLike(List<ChainDidProperty> propertyDescList, String propertyKey, Collection<DidProperty> properties) {
+        //Every time has to
+        for (ChainDidProperty p : propertyDescList) {
+            if ("1".equals(p.getDidStatus())) {
+                if (p.getPropertyKey().contains(propertyKey)) {
+                    saveProperty(properties, p);
+                }
+            } else {
+                //The did has been deprecated.
+                return false;
+            }
+        }
+        return true;
+    }
+
     private boolean filterValidDidProperties(List<ChainDidProperty> propertyDescList, String propertyKey, Collection<DidProperty> properties) {
         //Every time has to
         for (ChainDidProperty p : propertyDescList) {
@@ -274,18 +307,18 @@ public class ElaDidChainService {
         properties.add(didProperty);
     }
 
-    public ReturnMsgEntity getAllPropertyValue(String propertyKey, Integer page, Integer size) {
+    public ReturnMsgEntity getPropertiesCrossDID(String propertyKey, Integer page, Integer size) {
         Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "id");
 
         List<ChainDidProperty> onChainProperties = didPropertyOnChainRepository.findByPropertyKey(propertyKey, sort);
         if ((null == onChainProperties) || (onChainProperties.isEmpty())) {
-            logger.debug("getAllPropertyValue There is no data in database. property= {},status={}", propertyKey);
+            logger.debug("getPropertiesCrossDID There is no data in database. property= {}", propertyKey);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
 
         Set<PropertyOfDid> propertySet = new HashSet<>();
         if (!filterValidPropertiesOfDid(onChainProperties, propertySet)) {
-            logger.debug("getDIDProperties The did is deprecated. property = {}", propertyKey);
+            logger.debug("getPropertiesOfDid The did is deprecated. property = {}", propertyKey);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
 
@@ -296,7 +329,7 @@ public class ElaDidChainService {
             String ret = propertiesOfDidToJson(new ArrayList<>(propertySet), page, size);
             return new ReturnMsgEntity().setResult(ret).setStatus(retCodeConfiguration.SUCC());
         } else {
-            logger.debug("getAllPropertyValue There is no property data . property = {}", propertyKey);
+            logger.debug("getPropertiesCrossDID There is no property data . property = {}", propertyKey);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
     }
@@ -337,6 +370,23 @@ public class ElaDidChainService {
             List<PropertyOfDid> subList = properties.subList(start, end);
             return JSON.toJSONString(subList);
         }
+    }
+
+    public ReturnMsgEntity getPropertiesOfAppId(String appId) {
+        Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "id");
+
+        List<ChainDidApp> onChainDidApp = didAppOnChainRepository.findByInfoValue(appId, sort);
+        if ((null == onChainDidApp) || (onChainDidApp.isEmpty())) {
+            logger.debug("getPropertiesOfAppId There is no data in database. appid= {}", appId);
+            return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
+        }
+
+        PropertiesOfDidApp propertiesOfDidApp = new PropertiesOfDidApp();
+        propertiesOfDidApp.setDid(onChainDidApp.get(0).getDid());
+        propertiesOfDidApp.setPublic_key(onChainDidApp.get(0).getPublicKey());
+        propertiesOfDidApp.setApp_id(onChainDidApp.get(0).getInfoValue());
+
+        return new ReturnMsgEntity().setResult(JSON.toJSONString(propertiesOfDidApp)).setStatus(retCodeConfiguration.SUCC());
     }
 
 }

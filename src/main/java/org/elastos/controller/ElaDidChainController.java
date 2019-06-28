@@ -18,11 +18,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
-/**
- * clark
- * <p>
- * 9/20/18
- */
 @RestController
 @RequestMapping("/api/1/didexplorer")
 public class ElaDidChainController {
@@ -30,39 +25,19 @@ public class ElaDidChainController {
     @Autowired
     private ElaDidChainService didChainService;
 
-    @RequestMapping(value = "asset/utxos/{chain}/{address}", method = RequestMethod.GET)
-    @ResponseBody
-    public String getUtxosByAddr(@PathVariable("address") String address, @PathVariable("chain") ChainType type) {
-        return didChainService.getUtxosByAddr(address, type);
-    }
-
-    @RequestMapping(value = "transaction/{chain}/{txid}", method = RequestMethod.GET)
-    @ResponseBody
-    public String getTransaction(@PathVariable("txid") String txid, @PathVariable("chain") ChainType type) {
-        return didChainService.getTransaction(txid, type);
-    }
-
-    @RequestMapping(value = "transaction/{chain}", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseBody
-    public String sendRawTransaction(@RequestAttribute String reqBody, @PathVariable("chain") ChainType type) {
-        RawTxEntity tx = JSON.parseObject(reqBody, RawTxEntity.class);
-        return didChainService.sendTransaction(tx, type);
-
-    }
-
     @RequestMapping(value = {"did/{did}", "did/{did}/status/{status}"}, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public String getDIDProperties(@PathVariable("did") String did,
-                                   @PathVariable(required = false, name = "status") InputDidStatus status,
-                                   @RequestParam(required = false, name = "page") Integer page,
-                                   @RequestParam(required = false, name = "size") Integer size,
-                                   @RequestParam(required = false, name = "detailed") Optional<Boolean> detailed) {
+    public String getPropertiesOfDid(@PathVariable("did") String did,
+                                     @PathVariable(required = false, name = "status") InputDidStatus status,
+                                     @RequestParam(required = false, name = "page") Integer page,
+                                     @RequestParam(required = false, name = "size") Integer size,
+                                     @RequestParam(required = false, name = "detailed") Optional<Boolean> detailed) {
         ReturnMsgEntity ret;
         if (detailed.isPresent() && detailed.get()) {
-            ret = didChainService.getDIDDetailedProperties(did,
+            ret = didChainService.getDetailedPropertiesOfDid(did,
                     (null == status) ? InputDidStatus.normal : status, page, size);
         } else {
-            ret = didChainService.getDIDProperties(did,
+            ret = didChainService.getPropertiesOfDid(did,
                     (null == status) ? InputDidStatus.normal : status, page, size);
         }
         return JSON.toJSONString(ret);
@@ -70,15 +45,17 @@ public class ElaDidChainController {
 
     @RequestMapping(value = "did/{did}/property/{property_key}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public String getDIDPropertyValue(@PathVariable("did") String did,
+    @Deprecated
+    public String getDIDProperty_old(@PathVariable("did") String did,
                                       @PathVariable("property_key") String propertyKey) {
-        ReturnMsgEntity ret = didChainService.getDIDPropertyValue(did, propertyKey);
+        ReturnMsgEntity ret = didChainService.getDIDProperty(did, propertyKey);
         return JSON.toJSONString(ret);
     }
 
     @RequestMapping(value = "did/{did}/property_history/{property_key}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public String getDIDPropertyHistory(@PathVariable("did") String did,
+    @Deprecated
+    public String getDIDPropertyHistory_old(@PathVariable("did") String did,
                                         @PathVariable("property_key") String propertyKey,
                                         @RequestParam(required = false, name = "page") Integer page,
                                         @RequestParam(required = false, name = "size") Integer size) {
@@ -88,15 +65,15 @@ public class ElaDidChainController {
 
     @RequestMapping(value = "did/{did}/property", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public String getDIDPropertyValueByParam(@PathVariable("did") String did,
+    public String getDIDProperty(@PathVariable("did") String did,
                                              @RequestParam(name = "key") String propertyKey) {
-        ReturnMsgEntity ret = didChainService.getDIDPropertyValue(did, propertyKey);
+        ReturnMsgEntity ret = didChainService.getDIDProperty(did, propertyKey);
         return JSON.toJSONString(ret);
     }
 
     @RequestMapping(value = "did/{did}/property_history", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public String getDIDPropertyHistoryByParam(@PathVariable("did") String did,
+    public String getDIDPropertyHistory(@PathVariable("did") String did,
                                                @RequestParam(name = "key") String propertyKey,
                                                @RequestParam(required = false, name = "page") Integer page,
                                                @RequestParam(required = false, name = "size") Integer size) {
@@ -104,12 +81,37 @@ public class ElaDidChainController {
         return JSON.toJSONString(ret);
     }
 
+    @RequestMapping(value = "did/{did}/property_like", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String getDIDPropertyLike(@PathVariable("did") String did,
+                                             @RequestParam(name = "key") String propertyKey) {
+        ReturnMsgEntity ret = didChainService.getDIDPropertyLike(did, propertyKey);
+        return JSON.toJSONString(ret);
+    }
+
+    @RequestMapping(value = "did/{did}/property_history_like", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String getDIDPropertyHistoryLike(@PathVariable("did") String did,
+                                               @RequestParam(name = "key") String propertyKey,
+                                               @RequestParam(required = false, name = "page") Integer page,
+                                               @RequestParam(required = false, name = "size") Integer size) {
+        ReturnMsgEntity ret = didChainService.getDIDPropertyHistoryLike(did, propertyKey, page, size);
+        return JSON.toJSONString(ret);
+    }
+
     @RequestMapping(value = "property", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public String getAllDIDPropertyValueByParam(@RequestParam(name = "key") String propertyKey,
-                                                @RequestParam(required = false, name = "page") Integer page,
-                                                @RequestParam(required = false, name = "size") Integer size) {
-        ReturnMsgEntity ret = didChainService.getAllPropertyValue(propertyKey, page, size);
+    public String getPropertiesCrossDID(@RequestParam(name = "key") String propertyKey,
+                                        @RequestParam(required = false, name = "page") Integer page,
+                                        @RequestParam(required = false, name = "size") Integer size) {
+        ReturnMsgEntity ret = didChainService.getPropertiesCrossDID(propertyKey, page, size);
+        return JSON.toJSONString(ret);
+    }
+
+    @RequestMapping(value = "did_app", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String getPropertiesCrossDID(@RequestParam(name = "appid") String appId) {
+        ReturnMsgEntity ret = didChainService.getPropertiesOfAppId(appId);
         return JSON.toJSONString(ret);
     }
 

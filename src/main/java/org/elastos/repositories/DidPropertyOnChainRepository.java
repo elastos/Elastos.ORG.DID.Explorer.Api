@@ -10,8 +10,6 @@ import java.util.List;
 
 @Repository
 public interface DidPropertyOnChainRepository extends JpaRepository<ChainDidProperty, Long>, JpaSpecificationExecutor<ChainDidProperty> {
-    List<ChainDidProperty> findByDidAndPropertyKey(String did, String propertyKey, Sort sort);
-
     List<ChainDidProperty> findByDid(String did, Sort sort);
 
     List<ChainDidProperty> findByPropertyKey(String propertyKey, Sort sort);

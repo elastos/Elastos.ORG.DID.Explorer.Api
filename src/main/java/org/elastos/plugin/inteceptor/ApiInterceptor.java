@@ -17,13 +17,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
-/**
- *
- * clark
- *
- * 9/4/18
- *
- */
 @Component
 public class ApiInterceptor extends HandlerInterceptorAdapter {
 

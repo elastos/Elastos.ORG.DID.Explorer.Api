@@ -27,16 +27,6 @@ public class ChainDidPropertyRepositoryTest {
     }
 
     @Test
-    public void findByDidAndPropertyKey() throws Exception {
-        Sort sort = new Sort(Sort.Direction.DESC, "blockTime");
-        List<ChainDidProperty> properties
-                = didPropertyOnChainRepository.findByDidAndPropertyKey(
-                "ijZ71xbJ7tduDybqRSEHgjaRtKzBNcJdJt",
-                "publicKey", sort);
-        System.out.println("Property data size" + properties.size());
-    }
-
-    @Test
     public void findByDid() throws Exception {
         Sort sort = new Sort(Sort.Direction.DESC, "blockTime");
         List<ChainDidProperty> properties
