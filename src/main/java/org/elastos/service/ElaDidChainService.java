@@ -154,9 +154,14 @@ public class ElaDidChainService {
         }
     }
 
-    public ReturnMsgEntity getDIDPropertyLike(String did, String propertyKey) {
+    public ReturnMsgEntity getDIDPropertyLike(String did, String propertyKey, Integer blockHeightMin) {
         Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "id");
-        List<ChainDidProperty> onChainProperties = didPropertyOnChainRepository.findByDid(did, sort);
+        List<ChainDidProperty> onChainProperties;
+        if (null == blockHeightMin) {
+            onChainProperties = didPropertyOnChainRepository.findByDid(did, sort);
+        } else {
+            onChainProperties = didPropertyOnChainRepository.findByDidAndHeightIsGreaterThanEqual(did, blockHeightMin, sort);
+        }
         if ((null == onChainProperties) || (onChainProperties.isEmpty())) {
             logger.debug("getDIDPropertyLike There is no data in database. did = {},propertyKey={}", did, propertyKey);
             System.out.println("getDIDPropertyLike There is no data in database. did=" + did + ",status=" + propertyKey);
@@ -183,9 +188,15 @@ public class ElaDidChainService {
         }
     }
 
-    public ReturnMsgEntity getDIDPropertyHistoryLike(String did, String propertyKey, Integer page, Integer size) {
+    public ReturnMsgEntity getDIDPropertyHistoryLike(String did, String propertyKey, Integer blockHeightMin, Integer size, Integer page) {
         Sort sort = new Sort(Sort.Direction.DESC, "blockTime", "id");
-        List<ChainDidProperty> onChainProperties = didPropertyOnChainRepository.findByDid(did, sort);
+        List<ChainDidProperty> onChainProperties;
+        if (null == blockHeightMin) {
+            onChainProperties = didPropertyOnChainRepository.findByDid(did, sort);
+        } else {
+            onChainProperties = didPropertyOnChainRepository.findByDidAndHeightIsGreaterThanEqual(did, blockHeightMin, sort);
+        }
+
         if ((null == onChainProperties) || (onChainProperties.isEmpty())) {
             logger.debug("getDIDPropertyHistoryLike There is no data in database. did = {},propertyKey={}", did, propertyKey);
             System.out.println("getDIDPropertyHistoryLike getDIDProperty There is no data in database. did=" + did + ",status=" + propertyKey);

@@ -8,8 +8,6 @@ package org.elastos.controller;
 
 import com.alibaba.fastjson.JSON;
 import org.elastos.POJO.InputDidStatus;
-import org.elastos.entity.ChainType;
-import org.elastos.entity.RawTxEntity;
 import org.elastos.entity.ReturnMsgEntity;
 import org.elastos.service.ElaDidChainService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -84,8 +82,9 @@ public class ElaDidChainController {
     @RequestMapping(value = "did/{did}/property_like", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public String getDIDPropertyLike(@PathVariable("did") String did,
-                                             @RequestParam(name = "key") String propertyKey) {
-        ReturnMsgEntity ret = didChainService.getDIDPropertyLike(did, propertyKey);
+                                             @RequestParam(name = "key") String propertyKey,
+                                             @RequestParam(required = false, name = "blockheightmin") Integer blockHeightMin) {
+        ReturnMsgEntity ret = didChainService.getDIDPropertyLike(did, propertyKey, blockHeightMin);
         return JSON.toJSONString(ret);
     }
 
@@ -93,9 +92,10 @@ public class ElaDidChainController {
     @ResponseBody
     public String getDIDPropertyHistoryLike(@PathVariable("did") String did,
                                                @RequestParam(name = "key") String propertyKey,
+                                               @RequestParam(required = false, name = "blockheightmin") Integer blockHeightMin,
                                                @RequestParam(required = false, name = "page") Integer page,
                                                @RequestParam(required = false, name = "size") Integer size) {
-        ReturnMsgEntity ret = didChainService.getDIDPropertyHistoryLike(did, propertyKey, page, size);
+        ReturnMsgEntity ret = didChainService.getDIDPropertyHistoryLike(did, propertyKey, blockHeightMin, size, page);
         return JSON.toJSONString(ret);
     }
 

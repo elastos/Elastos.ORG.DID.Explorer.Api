@@ -12,5 +12,7 @@ import java.util.List;
 public interface DidPropertyOnChainRepository extends JpaRepository<ChainDidProperty, Long>, JpaSpecificationExecutor<ChainDidProperty> {
     List<ChainDidProperty> findByDid(String did, Sort sort);
 
+    List<ChainDidProperty> findByDidAndHeightIsGreaterThanEqual(String did, Integer Height, Sort sort);
+
     List<ChainDidProperty> findByPropertyKey(String propertyKey, Sort sort);
 }
