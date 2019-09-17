@@ -1,9 +1,35 @@
 package org.elastos.POJO;
 
+import org.elastos.entity.ChainDidProperty;
+
 public class DidProperty {
     String key;
     String value;
     InputDidStatus status = InputDidStatus.normal;
+    Long id;
+    String did;
+    String didStatus;
+    String publicKey;
+    String txid;
+    Integer blockTime;
+    Integer height;
+
+    public void saveToDidProperty(ChainDidProperty p) {
+        id = p.getId();
+        did = p.getDid();
+        didStatus = p.getDidStatus();
+        publicKey = p.getPublicKey();
+        if ("1".equals(p.getPropertyStatus())) {
+            status = InputDidStatus.normal;
+        } else {
+            status = InputDidStatus.deprecated;
+        }
+        key = p.getPropertyKey();
+        value = p.getPropertyValue();
+        txid = p.getTxid();
+        blockTime = p.getBlockTime();
+        height = p.getHeight();
+    }
 
     public String getKey() {
         return key;
@@ -27,6 +53,62 @@ public class DidProperty {
 
     public void setStatus(InputDidStatus status) {
         this.status = status;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getDid() {
+        return did;
+    }
+
+    public void setDid(String did) {
+        this.did = did;
+    }
+
+    public String getDidStatus() {
+        return didStatus;
+    }
+
+    public void setDidStatus(String didStatus) {
+        this.didStatus = didStatus;
+    }
+
+    public String getPublicKey() {
+        return publicKey;
+    }
+
+    public void setPublicKey(String publicKey) {
+        this.publicKey = publicKey;
+    }
+
+    public String getTxid() {
+        return txid;
+    }
+
+    public void setTxid(String txid) {
+        this.txid = txid;
+    }
+
+    public Integer getBlockTime() {
+        return blockTime;
+    }
+
+    public void setBlockTime(Integer blockTime) {
+        this.blockTime = blockTime;
+    }
+
+    public Integer getHeight() {
+        return height;
+    }
+
+    public void setHeight(Integer height) {
+        this.height = height;
     }
 
     @Override

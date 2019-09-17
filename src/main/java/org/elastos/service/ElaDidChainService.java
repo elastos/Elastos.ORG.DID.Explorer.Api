@@ -209,8 +209,6 @@ public class ElaDidChainService {
     }
 
     private String propertiesToJson(List<DidProperty> properties, Integer page, Integer size) {
-        //clean status, do not output it for user.
-        properties.forEach(pro -> pro.setStatus(null));
         if (null == page) {
             return JSON.toJSONString(properties);
         } else {
@@ -297,13 +295,7 @@ public class ElaDidChainService {
 
     private void saveProperty(Collection<DidProperty> properties, ChainDidProperty p) {
         DidProperty didProperty = new DidProperty();
-        didProperty.setKey(p.getPropertyKey());
-        didProperty.setValue(p.getPropertyValue());
-        if ("1".equals(p.getPropertyStatus())) {
-            didProperty.setStatus(InputDidStatus.normal);
-        } else {
-            didProperty.setStatus(InputDidStatus.deprecated);
-        }
+        didProperty.saveToDidProperty(p);
         properties.add(didProperty);
     }
 
