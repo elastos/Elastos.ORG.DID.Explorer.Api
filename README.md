@@ -137,7 +137,7 @@ It response like:
 ### Get properties which key contains some string of a did 
 ```yaml
 HTTP: GET
-URL: /api/1/didexplorer/did/{did}/property_like?key={key_name}
+URL: /api/1/didexplorer/did/{did}/property_like?key={key_name}[&blockheightmin={height}]
 HEADERS:
     Content-Type: application/json
 return:
@@ -167,7 +167,7 @@ It response like:
 ### Get properties history which key contains some string of a did 
 ```yaml
 HTTP: GET
-URL: /api/1/didexplorer/did/{did}/property_history_like?key={key_name}[&page={page_number}&size={size_number}]
+URL: /api/1/didexplorer/did/{did}/property_history_like?key={key_name}[&blockheightmin={height}&page={page_number}&size={size_number}]
 HEADERS:
     Content-Type: application/json
 return:
