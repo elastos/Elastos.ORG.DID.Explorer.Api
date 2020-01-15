@@ -18,6 +18,6 @@ public interface DidPropertyOnChainRepository extends JpaRepository<ChainDidProp
     List<ChainDidProperty> findByPropertyKey(String propertyKey, Sort sort);
 
 
-    List<ChainDidProperty> findByHeightGreaterThanAndHeightLessThan(Integer start, Integer end, Sort sort);
+    List<ChainDidProperty> findFirst100ByHeightGreaterThan(Integer start, Sort sort);
 
 }

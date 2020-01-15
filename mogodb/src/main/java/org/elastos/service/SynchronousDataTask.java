@@ -25,22 +25,27 @@ public class SynchronousDataTask {
     private DidPropertyOnChainRepository didPropertyOnChainRepository;
 
     void initService(){
+        //todo  for while height is less than db
         Integer height = elaDidMongoDbService.getCurrentBlockHeight();
         if (null == height) {
             throw  new ElastosServiceException("Err initService elaDidMongoDbService.getCurrentBlockHeight failed");
         }
 
-        mysqlToMongodb(height);
+        mysqlToMongodb();
 
         onFlag = true;
     }
 
-    private void mysqlToMongodb(Integer height) {
-        Sort sort = Sort.by(Sort.Direction.ASC, "id");
-        List<ChainDidProperty> didProperties = didPropertyOnChainRepository.findByHeightGreaterThanAndHeightLessThan(height, height + 100, sort);
-        for (ChainDidProperty property : didProperties) {
-            elaDidMongoDbService.setProperty(property);
-        }
+    private void mysqlToMongodb() {
+        List<ChainDidProperty> didProperties;
+        do {
+            Integer height = elaDidMongoDbService.getCurrentBlockHeight();
+            Sort sort = Sort.by(Sort.Direction.ASC, "id");
+            didProperties = didPropertyOnChainRepository.findFirst100ByHeightGreaterThan(height, sort);
+            for (ChainDidProperty property : didProperties) {
+                elaDidMongoDbService.setProperty(property);
+            }
+        } while (!didProperties.isEmpty());
     }
 
     @Scheduled(fixedDelay =  60 * 1000)
@@ -48,12 +53,6 @@ public class SynchronousDataTask {
         if (!onFlag) {
             return;
         }
-        Integer height = elaDidMongoDbService.getCurrentBlockHeight();
-        if (null == height) {
-            logger.error("Err DidDataMysqlToMongodb elaDidMongoDbService.getCurrentBlockHeight failed");
-            return;
-        }
-
-        mysqlToMongodb(height);
+        mysqlToMongodb();
     }
 }
