@@ -25,6 +25,8 @@ public class RetCodeConfiguration {
     private long NOT_FOUND        ;
     private long INTERNAL_ERROR   ;
     private long PROCESS_ERROR    ;
+    private long VERIFY_ERROR     ;
+    private long VERIFY_DID_ERROR ;
 
     public long PROCESS_ERROR() {
         return PROCESS_ERROR;
@@ -56,11 +58,27 @@ public class RetCodeConfiguration {
         this.NOT_FOUND = NOT_FOUND;
     }
 
-    public long NTERNAL_ERROR() {
+    public long INTERNAL_ERROR() {
         return INTERNAL_ERROR;
     }
 
     public void setINTERNAL_ERROR(long INTERNAL_ERROR) {
         this.INTERNAL_ERROR = INTERNAL_ERROR;
+    }
+
+    public long getVERIFY_ERROR() {
+        return VERIFY_ERROR;
+    }
+
+    public void setVERIFY_ERROR(long VERIFY_ERROR) {
+        this.VERIFY_ERROR = VERIFY_ERROR;
+    }
+
+    public long getVERIFY_DID_ERROR() {
+        return VERIFY_DID_ERROR;
+    }
+
+    public void setVERIFY_DID_ERROR(long VERIFY_DID_ERROR) {
+        this.VERIFY_DID_ERROR = VERIFY_DID_ERROR;
     }
 }

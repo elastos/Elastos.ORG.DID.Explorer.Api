@@ -4,7 +4,9 @@ import org.elastos.entity.ChainDidProperty;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -15,4 +17,12 @@ public interface DidPropertyOnChainRepository extends JpaRepository<ChainDidProp
     List<ChainDidProperty> findByDidAndHeightIsGreaterThanEqual(String did, Integer Height, Sort sort);
 
     List<ChainDidProperty> findByPropertyKey(String propertyKey, Sort sort);
+
+    @Query("select t.txid as txid from ChainDidProperty t group by t.txid")
+    List<String> findGroupByTxid();
+
+    @Transactional
+    void deleteByTxid(String txid);
 }
+
+

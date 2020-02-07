@@ -54,7 +54,7 @@ public class MappingExceptionResolver implements HandlerExceptionResolver {
         long status = 0;
 
         if (ex instanceof ApiInternalException) {
-            status = retCodeConfiguration.NTERNAL_ERROR();
+            status = retCodeConfiguration.INTERNAL_ERROR();
         } else {
             status = retCodeConfiguration.BAD_REQUEST();
         }

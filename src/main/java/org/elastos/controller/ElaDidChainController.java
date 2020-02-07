@@ -7,6 +7,7 @@
 package org.elastos.controller;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import org.elastos.POJO.InputDidStatus;
 import org.elastos.entity.ReturnMsgEntity;
 import org.elastos.service.ElaDidChainService;
@@ -112,6 +113,42 @@ public class ElaDidChainController {
     @ResponseBody
     public String getPropertiesCrossDID(@RequestParam(name = "appid") String appId) {
         ReturnMsgEntity ret = didChainService.getPropertiesOfAppId(appId);
+        return JSON.toJSONString(ret);
+    }
+
+    @RequestMapping(value = "cache", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    @ResponseBody
+    public String setPropertyCache(@RequestAttribute String reqBody) {
+        JSONObject ob = JSON.parseObject(reqBody);
+        String raw = ob.getString("raw");
+        String txid = ob.getString("txid");
+
+        ReturnMsgEntity ret = didChainService.setPropertyCache(raw, txid);
+        return JSON.toJSONString(ret);
+    }
+
+    @RequestMapping(value = "cache/did/{did}", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String getPropertiesOfDidFromCache(@PathVariable("did") String did,
+                                     @PathVariable(required = false, name = "status") InputDidStatus status){
+         ReturnMsgEntity ret = didChainService.getPropertiesOfDidFromCache(did);
+        return JSON.toJSONString(ret);
+    }
+
+    @RequestMapping(value = "cache/did/{did}/property", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    @Deprecated
+    public String getDIDPropertyFromCache(@PathVariable("did") String did,
+                                          @RequestParam(name = "key") String propertyKey) {
+        ReturnMsgEntity ret = didChainService.getDIDPropertyFromCache(did, propertyKey);
+        return JSON.toJSONString(ret);
+    }
+
+    @RequestMapping(value = "cache/did/{did}/property_history", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String getDIDPropertyHistoryFromCache(@PathVariable("did") String did,
+                                        @RequestParam(name = "key") String propertyKey) {
+        ReturnMsgEntity ret = didChainService.getPropertyHistoryFromCache(did, propertyKey);
         return JSON.toJSONString(ret);
     }
 

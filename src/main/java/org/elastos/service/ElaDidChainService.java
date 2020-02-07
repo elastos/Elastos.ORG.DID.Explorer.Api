@@ -1,11 +1,20 @@
 package org.elastos.service;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jetty.util.StringUtil;
 import org.elastos.POJO.*;
+import org.elastos.conf.NodeConfiguration;
 import org.elastos.conf.RetCodeConfiguration;
+import org.elastos.constant.RetCode;
 import org.elastos.entity.*;
 import org.elastos.repositories.DidAppOnChainRepository;
+import org.elastos.repositories.DidPropertyOnCacheRepository;
 import org.elastos.repositories.DidPropertyOnChainRepository;
+import org.elastos.util.RetResult;
+import org.elastos.util.ela.ElaKit;
+import org.elastos.util.ela.ElaSignTool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import javax.xml.bind.DatatypeConverter;
 import java.util.*;
 
 import static org.elastos.POJO.InputDidStatus.normal;
@@ -29,7 +39,13 @@ public class ElaDidChainService {
     private DidPropertyOnChainRepository didPropertyOnChainRepository;
 
     @Autowired
+    private DidPropertyOnCacheRepository didPropertyOnCacheRepository;
+
+    @Autowired
     private DidAppOnChainRepository didAppOnChainRepository;
+
+    @Autowired
+    private NodeConfiguration nodeConfiguration;
 
     private static Logger logger = LoggerFactory.getLogger(ElaDidChainService.class);
 
@@ -392,4 +408,103 @@ public class ElaDidChainService {
         return new ReturnMsgEntity().setResult(JSON.toJSONString(propertiesOfDidApp)).setStatus(retCodeConfiguration.SUCC());
     }
 
+    public ReturnMsgEntity setPropertyCache(String raw, String txid) {
+        JSONObject rawData = JSON.parseObject(raw);
+
+        String hexMsg = rawData.getString("msg");
+        String publicKey = rawData.getString("pub");
+        String sig = rawData.getString("sig");
+        boolean verifyRet = verify(publicKey, sig, hexMsg);
+        if (!verifyRet) {
+            return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.getVERIFY_ERROR());
+        }
+        String did = ElaKit.getIdentityFromPublicKey(publicKey);
+        String msg = new String(DatatypeConverter.parseHexBinary(hexMsg));
+        DidEntity didEntity = JSON.parseObject(msg, DidEntity.class);
+        String tag = didEntity.getTag();
+        if (StringUtil.isBlank(tag) || !DidEntity.DID_TAG.equals(tag)) {
+            return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.getVERIFY_DID_ERROR());
+        }
+        didEntity.setDid(did);
+
+        List<CacheDidProperty> cacheDidProperties = new ArrayList<>();
+
+        List<DidEntity.DidProperty> properties = didEntity.getProperties();
+        for (DidEntity.DidProperty property : properties) {
+            CacheDidProperty cacheDidProperty = new CacheDidProperty();
+            cacheDidProperty.setDid(did);
+            cacheDidProperty.setDidStatus(didEntity.getStatus());
+            cacheDidProperty.setPublicKey(publicKey);
+            cacheDidProperty.setTxid(txid);
+            cacheDidProperty.setKey(property.getKey());
+            cacheDidProperty.setValue(property.getValue());
+            cacheDidProperty.setStatus(property.getStatus());
+
+            if(!StringUtils.isAnyBlank(cacheDidProperty.getDid(),
+                    cacheDidProperty.getDidStatus(),
+                    cacheDidProperty.getKey(),
+                    cacheDidProperty.getValue(),
+                    cacheDidProperty.getStatus())){
+                cacheDidProperties.add(cacheDidProperty);
+            }
+        }
+
+        if (!cacheDidProperties.isEmpty()) {
+            didPropertyOnCacheRepository.saveAll(cacheDidProperties);
+        }
+
+        return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
+    }
+
+    private static boolean verify(String hexPub, String hexSig, String hexMsg) {
+        byte[] msg = DatatypeConverter.parseHexBinary(hexMsg);
+        byte[] sig = DatatypeConverter.parseHexBinary(hexSig);
+        byte[] pub = DatatypeConverter.parseHexBinary(hexPub);
+        boolean isVerify = ElaSignTool.verify(msg, sig, pub);
+        return isVerify;
+    }
+
+    public ReturnMsgEntity getPropertiesOfDidFromCache(String did){
+        Sort sort = new Sort(Sort.Direction.DESC, "createTime", "id");
+        List<CacheDidProperty> cacheDidProperties = didPropertyOnCacheRepository.findAllByDid(did, sort);
+        if ((null == cacheDidProperties) || (cacheDidProperties.isEmpty())) {
+            logger.debug("getPropertyHistoryFromCache There is no data in database. did = {}", did);
+            return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
+        }
+        return new ReturnMsgEntity().setResult(JSON.toJSONString(cacheDidProperties)).setStatus(retCodeConfiguration.SUCC());
+    }
+
+    public ReturnMsgEntity getDIDPropertyFromCache(String did ,String propertyKey){
+        Sort sort = new Sort(Sort.Direction.DESC, "createTime", "id");
+        Optional<CacheDidProperty> cacheDidPropertyOp = didPropertyOnCacheRepository.findFirstByDidAndAndKey(did, propertyKey, sort);
+        if (!cacheDidPropertyOp.isPresent()) {
+            logger.debug("getPropertyHistoryFromCache There is no data in database. did = {},propertyKey={}", did, propertyKey);
+            return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
+        }
+        return new ReturnMsgEntity().setResult(JSON.toJSONString(cacheDidPropertyOp.get())).setStatus(retCodeConfiguration.SUCC());
+    }
+
+    public ReturnMsgEntity getPropertyHistoryFromCache(String did ,String propertyKey){
+        Sort sort = new Sort(Sort.Direction.DESC, "createTime", "id");
+        List<CacheDidProperty> cacheDidProperties = didPropertyOnCacheRepository.findAllByDidAndAndKey(did, propertyKey, sort);
+        if ((null == cacheDidProperties) || (cacheDidProperties.isEmpty())) {
+            logger.debug("getPropertyHistoryFromCache There is no data in database. did = {},propertyKey={}", did, propertyKey);
+            return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
+        }
+        return new ReturnMsgEntity().setResult(JSON.toJSONString(cacheDidProperties)).setStatus(retCodeConfiguration.SUCC());
+    }
+
+    public void checkAndRemoveCache(){
+        List<String> txidList = didPropertyOnCacheRepository.findGroupByTxid();
+        if (txidList.isEmpty()) {
+            return;
+        }
+        ElaTransferService elaService = ElaTransferService.getInstance(ElaChainType.DID_CHAIN, nodeConfiguration.getDidPrefix(), false);
+        for (String txid : txidList) {
+            RetResult<String> ret = elaService.getTransactionReceipt(txid);
+            if (ret.getCode() == RetCode.SUCC) {
+                didPropertyOnCacheRepository.deleteByTxid(txid);
+            }
+        }
+    }
 }
