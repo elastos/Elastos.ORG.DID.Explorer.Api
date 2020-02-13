@@ -14,7 +14,7 @@ import java.util.Optional;
 @Repository
 public interface DidPropertyOnCacheRepository extends JpaRepository<CacheDidProperty, Long>, JpaSpecificationExecutor<CacheDidProperty> {
     List<CacheDidProperty> findAllByDid(String did, Sort sort);
-    Optional<CacheDidProperty> findFirstByDidAndAndKey(String did, String key, Sort sort);
+    List<CacheDidProperty> findFirstByDidAndAndKey(String did, String key, Sort sort);
     List<CacheDidProperty> findAllByDidAndAndKey(String did, String key, Sort sort);
 
     @Query("select t.txid as txid from CacheDidProperty t group by t.txid")

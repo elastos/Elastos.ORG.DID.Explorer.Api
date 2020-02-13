@@ -476,12 +476,12 @@ public class ElaDidChainService {
 
     public ReturnMsgEntity getDIDPropertyFromCache(String did ,String propertyKey){
         Sort sort = new Sort(Sort.Direction.DESC, "createTime", "id");
-        Optional<CacheDidProperty> cacheDidPropertyOp = didPropertyOnCacheRepository.findFirstByDidAndAndKey(did, propertyKey, sort);
-        if (!cacheDidPropertyOp.isPresent()) {
+        List<CacheDidProperty> cacheDidProperties = didPropertyOnCacheRepository.findFirstByDidAndAndKey(did, propertyKey, sort);
+        if (!cacheDidProperties.isEmpty()) {
             logger.debug("getPropertyHistoryFromCache There is no data in database. did = {},propertyKey={}", did, propertyKey);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
-        return new ReturnMsgEntity().setResult(JSON.toJSONString(cacheDidPropertyOp.get())).setStatus(retCodeConfiguration.SUCC());
+        return new ReturnMsgEntity().setResult(JSON.toJSONString(cacheDidProperties)).setStatus(retCodeConfiguration.SUCC());
     }
 
     public ReturnMsgEntity getPropertyHistoryFromCache(String did ,String propertyKey){
