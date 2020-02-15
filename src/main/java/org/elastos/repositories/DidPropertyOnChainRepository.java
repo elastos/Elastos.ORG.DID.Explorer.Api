@@ -18,6 +18,8 @@ public interface DidPropertyOnChainRepository extends JpaRepository<ChainDidProp
 
     List<ChainDidProperty> findByPropertyKey(String propertyKey, Sort sort);
 
+    List<ChainDidProperty> findAllByTxid(String txid);
+
     @Query("select t.txid as txid from ChainDidProperty t group by t.txid")
     List<String> findGroupByTxid();
 

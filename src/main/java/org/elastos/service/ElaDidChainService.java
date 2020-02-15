@@ -477,7 +477,7 @@ public class ElaDidChainService {
     public ReturnMsgEntity getDIDPropertyFromCache(String did ,String propertyKey){
         Sort sort = new Sort(Sort.Direction.DESC, "createTime", "id");
         List<CacheDidProperty> cacheDidProperties = didPropertyOnCacheRepository.findFirstByDidAndAndKey(did, propertyKey, sort);
-        if (!cacheDidProperties.isEmpty()) {
+        if (cacheDidProperties.isEmpty()) {
             logger.debug("getPropertyHistoryFromCache There is no data in database. did = {},propertyKey={}", did, propertyKey);
             return new ReturnMsgEntity().setResult("").setStatus(retCodeConfiguration.SUCC());
         }
@@ -499,10 +499,9 @@ public class ElaDidChainService {
         if (txidList.isEmpty()) {
             return;
         }
-        ElaTransferService elaService = ElaTransferService.getInstance(ElaChainType.DID_CHAIN, nodeConfiguration.getDidPrefix(), false);
         for (String txid : txidList) {
-            RetResult<String> ret = elaService.getTransactionReceipt(txid);
-            if (ret.getCode() == RetCode.SUCC) {
+            List<ChainDidProperty> properties = didPropertyOnChainRepository.findAllByTxid(txid);
+            if (!properties.isEmpty()) {
                 didPropertyOnCacheRepository.deleteByTxid(txid);
             }
         }
