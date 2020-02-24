@@ -36,7 +36,7 @@ public class MongodbDidInfoCol {
                 combine(Updates.set("publicKey", publicKey),Updates.set("status", status)),
                 new UpdateOptions().upsert(true));
         if (!MongodbUtil.isModified(updateResult)) {
-            logger.info("deleteDid updateMany of did:"+ did);
+            logger.info("upsertDidInfo updateMany of did:"+ did);
         }
     }
 

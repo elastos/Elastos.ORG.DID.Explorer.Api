@@ -1,7 +1,6 @@
 package org.elastos.service;
 
 import org.elastos.entity.ChainDidProperty;
-import org.elastos.exception.ElastosServiceException;
 import org.elastos.repositories.DidPropertyOnChainRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,30 +24,23 @@ public class SynchronousDataTask {
     private DidPropertyOnChainRepository didPropertyOnChainRepository;
 
     void initService(){
-        //todo  for while height is less than db
-        Integer height = elaDidMongoDbService.getCurrentBlockHeight();
-        if (null == height) {
-            throw  new ElastosServiceException("Err initService elaDidMongoDbService.getCurrentBlockHeight failed");
-        }
-
         mysqlToMongodb();
-
         onFlag = true;
     }
 
     private void mysqlToMongodb() {
         List<ChainDidProperty> didProperties;
         do {
-            Integer height = elaDidMongoDbService.getCurrentBlockHeight();
+            Long id= elaDidMongoDbService.getCurrentDidTableId();
             Sort sort = Sort.by(Sort.Direction.ASC, "id");
-            didProperties = didPropertyOnChainRepository.findFirst100ByHeightGreaterThan(height, sort);
+            didProperties = didPropertyOnChainRepository.findFirst100ByIdGreaterThan(id, sort);
             for (ChainDidProperty property : didProperties) {
                 elaDidMongoDbService.setProperty(property);
             }
         } while (!didProperties.isEmpty());
     }
 
-    @Scheduled(fixedDelay =  60 * 1000)
+    @Scheduled(fixedDelay =  50 * 1000)
     public void DidDataMysqlToMongodb(){
         if (!onFlag) {
             return;

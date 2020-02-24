@@ -17,14 +17,34 @@ import java.util.List;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.exists;
+import static com.mongodb.client.model.Sorts.descending;
 
 public class MongodbPropertyCol {
     private static Logger logger = LoggerFactory.getLogger(MongodbPropertyCol.class);
+    private String didTableIdField = "did_table_id";
     private String blockHeightField = "block_height";
+    private String blockHeightCountField = "block_height_count";
+    private String didTxidField = "did_txid";
+    private String didTxidCountField = "did_txid_count";
     private MongoCollection<Document> collection;
 
     public void init(MongoCollection<Document> var) {
         collection = var;
+    }
+
+    public UpdateResult updateDidTableId(Long id) {
+        UpdateResult ret = collection.updateOne(exists(didTableIdField),
+                Updates.set(didTableIdField, id), new UpdateOptions().upsert(true));
+        return ret;
+    }
+
+    public Long findDidTableId() {
+        Document doc = collection.find(exists(didTableIdField)).first();
+        if (null != doc) {
+            return doc.getLong(didTableIdField);
+        } else {
+            return 0L;
+        }
     }
 
     public UpdateResult updateBlockHeight(Integer blockHeight) {
@@ -42,6 +62,51 @@ public class MongodbPropertyCol {
         }
     }
 
+    public UpdateResult incBlockHeightCount() {
+        UpdateResult ret = collection.updateOne(exists(blockHeightCountField),
+                Updates.inc(blockHeightCountField, 1), new UpdateOptions().upsert(true));
+        return ret;
+    }
+
+    public Integer findBlockHeightCount() {
+        Document doc = collection.find(exists(blockHeightField)).first();
+        if (null != doc) {
+            return doc.getInteger(blockHeightField);
+        } else {
+            return 0;
+        }
+    }
+
+    public UpdateResult updateDidTxid(String txid) {
+        UpdateResult ret = collection.updateOne(exists(didTxidField),
+                Updates.set(didTxidField,  txid), new UpdateOptions().upsert(true));
+        return ret;
+    }
+
+    public String findDidTxid() {
+        Document doc = collection.find(exists(didTxidField)).first();
+        if (null != doc) {
+            return doc.getString(didTxidField);
+        } else {
+            return "";
+        }
+    }
+
+    public UpdateResult incDidTxidCount() {
+        UpdateResult ret = collection.updateOne(exists(didTxidCountField),
+                Updates.inc(didTxidCountField, 1), new UpdateOptions().upsert(true));
+        return ret;
+    }
+
+    public Integer findDidTxidCount() {
+        Document doc = collection.find(exists(didTxidCountField)).first();
+        if (null != doc) {
+            return doc.getInteger(didTxidCountField);
+        } else {
+            return 0;
+        }
+    }
+
     public PropertyDoc findProperty(String did, String propertyKey) {
         Document doc = collection.find(and(eq("did", did), exists(propertyKey))).first();
         if (null != doc) {
@@ -52,7 +117,7 @@ public class MongodbPropertyCol {
     }
 
     public List<PropertyDoc> findAllProperties(String did) {
-        FindIterable<Document> docs = collection.find(eq("did", did));
+        FindIterable<Document> docs = collection.find(eq("did", did)).sort(descending("id"));
         List<PropertyDoc> propertyDocs = new ArrayList<>();
         for (Document document : docs) {
             propertyDocs.add(docToProperty(document));
