@@ -17,9 +17,7 @@ import java.util.Optional;
 
 @RestController
 
-//todo for test
-//@RequestMapping("/api/2/didexplorer")
-@RequestMapping("/api/1/didexplorer")
+@RequestMapping("/api/2/didexplorer")
 public class ElaDidChainController {
 
     @Autowired

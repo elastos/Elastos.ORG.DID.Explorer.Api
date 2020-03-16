@@ -119,7 +119,6 @@ public class MongodbPropertyCol {
         }
     }
 
-    //todo too slow
     public List<PropertyDoc> findProperties(String propertyKey) {
         FindIterable<Document> docs = collection.find(eq("propertyKey", propertyKey));
         List<PropertyDoc> propertyDocs = new ArrayList<>();
