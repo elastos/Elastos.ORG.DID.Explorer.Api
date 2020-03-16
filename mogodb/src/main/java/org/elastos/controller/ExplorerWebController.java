@@ -13,7 +13,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/1/didexplorer/block")
+@RequestMapping("/api/2/didexplorer/block")
 public class ExplorerWebController {
 
     @Autowired

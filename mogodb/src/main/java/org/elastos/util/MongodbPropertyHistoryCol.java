@@ -21,6 +21,10 @@ public class MongodbPropertyHistoryCol {
 
     public void init(MongoCollection<Document> var) {
         collection = var;
+        Document did = new Document("did", 1);
+        collection.createIndex(did);
+        Document propertyKey = new Document("propertyKey", 1);
+        collection.createIndex(propertyKey);
     }
 
     public void delHistory(String did, String propertyKey) {

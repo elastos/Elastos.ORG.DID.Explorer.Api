@@ -28,7 +28,6 @@ public class ElaDidMongoDbService {
     private final String didInfo = "did_info";
     private final String didProperty = "did_property";
     private final String didPropertyHistory = "did_property_history";
-    //todo did 和特定property key(可配置) 加入索引
 
     @Autowired
     MongoDbConfiguration mongoDbConfiguration;
@@ -45,7 +44,6 @@ public class ElaDidMongoDbService {
     private void setDidProperty(ChainDidProperty property) {
         //did信息单独存document。 一个property也单独存一个document，因为一个区块8m，所以不会发生document不够大的情况
         String did = property.getDid();
-        String key = property.getPropertyKey();
 
         DidDoc didDoc = didInfoCol.findDidInfo(did);
         if ((null != didDoc) && (didDoc.getStatus() == 0)) {
@@ -55,11 +53,10 @@ public class ElaDidMongoDbService {
             didInfoCol.upsertDidInfo(property.getDid(), property.getPublicKey(), property.getDidStatus());
         }
 
-        PropertyDoc propertyDoc = propertyCol.findProperty(did, key);
-        if ((null != propertyDoc) && (propertyDoc.getStatus() == 0)) {
-            logger.info("did:" + did + " " + key + " is deleted");
-        } else {
+        if (0 != property.getDidStatus()) {
             propertyCol.upsertProperty(property);
+        } else {
+            propertyCol.delDidProperty(did);
         }
     }
 
@@ -67,6 +64,14 @@ public class ElaDidMongoDbService {
         historyCol.addsertHistory(did, key, mysqlId);
     }
 
+    public void setPropertyList(List<ChainDidProperty> propertyList) {
+        setDidProperty(propertyList);
+        addDidPropertyHistory(propertyList.getDid(),
+                propertyList.getPropertyKey(), propertyList.getId());
+        updateDidTableId(propertyList.getId());
+        updateBlockHeight(propertyList.getHeight());
+        updateDidTxid(propertyList.getTxid());
+    }
 
     public void setProperty(ChainDidProperty property) {
         setDidProperty(property);
@@ -90,11 +95,11 @@ public class ElaDidMongoDbService {
         return RetResult.retOk(didDoc);
     }
 
-    private ChainDidProperty docToDidProperty(DidDoc didDoc, PropertyDoc propertyDoc ){
+    private ChainDidProperty docToDidProperty(PropertyDoc propertyDoc ){
         ChainDidProperty didProperty = new ChainDidProperty();
-        didProperty.setDid(didDoc.getDid());
-        didProperty.setDidStatus(didDoc.getStatus());
-        didProperty.setPublicKey(didDoc.getPublicKey());
+        didProperty.setDid(propertyDoc.getDid());
+        didProperty.setDidStatus(propertyDoc.getDidStatus());
+        didProperty.setPublicKey(propertyDoc.getPublicKey());
         didProperty.setId(propertyDoc.getId());
         didProperty.setPropertyStatus(propertyDoc.getStatus());
         didProperty.setPropertyKey(propertyDoc.getPropertyKey());
@@ -112,10 +117,33 @@ public class ElaDidMongoDbService {
             return RetResult.retErr(didDocRetResult.getCode(), didDocRetResult.getMsg());
         }
         DidDoc didDoc = didDocRetResult.getData();
-        List < PropertyDoc > propertyDocs = propertyCol.findAllProperties(did);
+        List < PropertyDoc > propertyDocs = propertyCol.findAllPropertiesOfDid(did);
         List<ChainDidProperty> chainDidPropertyList = new ArrayList<>();
         for (PropertyDoc propertyDoc: propertyDocs) {
-            ChainDidProperty property = docToDidProperty(didDoc, propertyDoc);
+            ChainDidProperty property = docToDidProperty(propertyDoc);
+            chainDidPropertyList.add(property);
+        }
+
+        return RetResult.retOk(chainDidPropertyList);
+    }
+
+    public RetResult<List<ChainDidProperty>> getProperties(String propertyKey){
+        List < PropertyDoc > propertyDocs = propertyCol.findProperties(propertyKey);
+        return filterDidPropertyList(propertyDocs);
+    }
+
+    public RetResult<List<ChainDidProperty>> getPropertiesLike(String propertyKeyLike){
+        List < PropertyDoc > propertyDocs = propertyCol.findPropertiesLike(propertyKeyLike);
+        return filterDidPropertyList(propertyDocs);
+    }
+
+    private RetResult<List<ChainDidProperty>> filterDidPropertyList(List<PropertyDoc> propertyDocs) {
+        List<ChainDidProperty> chainDidPropertyList = new ArrayList<>();
+        for (PropertyDoc propertyDoc: propertyDocs) {
+            if (propertyDoc.getDidStatus() == 0) {
+                continue;
+            }
+            ChainDidProperty property = docToDidProperty(propertyDoc);
             chainDidPropertyList.add(property);
         }
 
@@ -127,21 +155,38 @@ public class ElaDidMongoDbService {
         if (didDocRetResult.getCode() != RetCode.SUCC) {
             return RetResult.retErr(didDocRetResult.getCode(), didDocRetResult.getMsg());
         }
-        DidDoc didDoc = didDocRetResult.getData();
 
         PropertyDoc propertyDoc = propertyCol.findProperty(did, propertyKey);
         if (null == propertyDoc) {
             return RetResult.retErr(ERROR_DATA_NOT_FOUND, "DID:" + did + " property:" + propertyKey + " not found");
-        } else if (propertyDoc.getStatus() == 0) {
-            logger.info("DID:" + did + " property:" + propertyKey + " is deleted");
-            return RetResult.retErr(ERROR_PARAMETER, "DID:" + did + " property:" + propertyKey + " is deleted");
         }
 
-        ChainDidProperty didProperty = docToDidProperty(didDoc, propertyDoc);
+        ChainDidProperty didProperty = docToDidProperty(propertyDoc);
         return RetResult.retOk(didProperty);
     }
 
+    public RetResult<List<ChainDidProperty>> getPropertyLike(String did, String propertyKeyLike) {
+        RetResult<DidDoc> didDocRetResult = findDidDoc (did);
+        if (didDocRetResult.getCode() != RetCode.SUCC) {
+            return RetResult.retErr(didDocRetResult.getCode(), didDocRetResult.getMsg());
+        }
+
+        List<PropertyDoc> propertyDocs = propertyCol.findPropertiesLike(did, propertyKeyLike);
+        List<ChainDidProperty> chainDidPropertyList = new ArrayList<>();
+        for (PropertyDoc propertyDoc: propertyDocs) {
+            ChainDidProperty property = docToDidProperty(propertyDoc);
+            chainDidPropertyList.add(property);
+        }
+
+        return RetResult.retOk(chainDidPropertyList);
+    }
+
     public RetResult<List<Long>> getPropertyHistoryIds(String did, String propertyKey) {
+        RetResult<DidDoc> didDocRetResult = findDidDoc (did);
+        if (didDocRetResult.getCode() != RetCode.SUCC) {
+            return RetResult.retErr(didDocRetResult.getCode(), didDocRetResult.getMsg());
+        }
+
         List<Long> ids = historyCol.findHistory(did, propertyKey);
         if (ids.isEmpty()) {
             return RetResult.retErr(ERROR_DATA_NOT_FOUND, "DID:" + did + " property:" + propertyKey + " not found");

@@ -14,10 +14,9 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.mongodb.client.model.Filters.and;
-import static com.mongodb.client.model.Filters.eq;
-import static com.mongodb.client.model.Filters.exists;
+import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Sorts.descending;
+import static com.mongodb.client.model.Updates.set;
 
 public class MongodbPropertyCol {
     private static Logger logger = LoggerFactory.getLogger(MongodbPropertyCol.class);
@@ -30,11 +29,15 @@ public class MongodbPropertyCol {
 
     public void init(MongoCollection<Document> var) {
         collection = var;
+        Document did = new Document("did", 1);
+        collection.createIndex(did);
+        Document propertyKey = new Document("propertyKey", 1);
+        collection.createIndex(propertyKey);
     }
 
     public UpdateResult updateDidTableId(Long id) {
         UpdateResult ret = collection.updateOne(exists(didTableIdField),
-                Updates.set(didTableIdField, id), new UpdateOptions().upsert(true));
+                set(didTableIdField, id), new UpdateOptions().upsert(true));
         return ret;
     }
 
@@ -49,7 +52,7 @@ public class MongodbPropertyCol {
 
     public UpdateResult updateBlockHeight(Integer blockHeight) {
         UpdateResult ret = collection.updateOne(exists(blockHeightField),
-                Updates.set(blockHeightField, blockHeight), new UpdateOptions().upsert(true));
+                set(blockHeightField, blockHeight), new UpdateOptions().upsert(true));
         return ret;
     }
 
@@ -79,7 +82,7 @@ public class MongodbPropertyCol {
 
     public UpdateResult updateDidTxid(String txid) {
         UpdateResult ret = collection.updateOne(exists(didTxidField),
-                Updates.set(didTxidField,  txid), new UpdateOptions().upsert(true));
+                set(didTxidField, txid), new UpdateOptions().upsert(true));
         return ret;
     }
 
@@ -116,7 +119,35 @@ public class MongodbPropertyCol {
         }
     }
 
-    public List<PropertyDoc> findAllProperties(String did) {
+    //todo too slow
+    public List<PropertyDoc> findProperties(String propertyKey) {
+        FindIterable<Document> docs = collection.find(eq("propertyKey", propertyKey));
+        List<PropertyDoc> propertyDocs = new ArrayList<>();
+        for (Document document : docs) {
+            propertyDocs.add(docToProperty(document));
+        }
+        return propertyDocs;
+    }
+
+    public List<PropertyDoc> findPropertiesLike(String propertyKeyLike) {
+        FindIterable<Document> docs = collection.find(regex("propertyKey", ".*" + propertyKeyLike + ".*"));
+        List<PropertyDoc> propertyDocs = new ArrayList<>();
+        for (Document document : docs) {
+            propertyDocs.add(docToProperty(document));
+        }
+        return propertyDocs;
+    }
+
+    public List<PropertyDoc> findPropertiesLike(String did, String propertyKeyLike) {
+        FindIterable<Document> docs = collection.find(and(eq("did", did), regex("propertyKey", ".*" + propertyKeyLike + ".*")));
+        List<PropertyDoc> propertyDocs = new ArrayList<>();
+        for (Document document : docs) {
+            propertyDocs.add(docToProperty(document));
+        }
+        return propertyDocs;
+    }
+
+    public List<PropertyDoc> findAllPropertiesOfDid(String did) {
         FindIterable<Document> docs = collection.find(eq("did", did)).sort(descending("id"));
         List<PropertyDoc> propertyDocs = new ArrayList<>();
         for (Document document : docs) {
@@ -125,10 +156,12 @@ public class MongodbPropertyCol {
         return propertyDocs;
     }
 
-    private PropertyDoc docToProperty(Document doc){
+    private PropertyDoc docToProperty(Document doc) {
         PropertyDoc propertyDoc = new PropertyDoc();
         propertyDoc.setId(doc.getLong("id"));
         propertyDoc.setDid(doc.getString("did"));
+        propertyDoc.setDidStatus(doc.getInteger("didStatus"));
+        propertyDoc.setPublicKey(doc.getString("publicKey"));
         propertyDoc.setPropertyKey(doc.getString("propertyKey"));
         propertyDoc.setPropertyValue(doc.getString(propertyDoc.getPropertyKey()));
         propertyDoc.setStatus(doc.getInteger("status"));
@@ -142,6 +175,8 @@ public class MongodbPropertyCol {
     private Document ChainPropertyToDoc(ChainDidProperty property) {
         Document propertyDoc = new Document("id", property.getId())
                 .append(property.getPropertyKey(), property.getPropertyValue())
+                .append("didStatus", property.getDidStatus())
+                .append("publicKey", property.getPublicKey())
                 .append("status", property.getPropertyStatus())
                 .append("txid", property.getTxid())
                 .append("blockTime", property.getBlockTime())
@@ -160,6 +195,10 @@ public class MongodbPropertyCol {
     public UpdateResult upsertProperty(ChainDidProperty property) {
         String did = property.getDid();
         String propertyKey = property.getPropertyKey();
+        if ((null == propertyKey) || ("".equals(propertyKey))) {
+            logger.info("upsertProperty updateOne of did:" + did + " property key is null");
+            return null;
+        }
         Document doc = ChainPropertyToDoc(property);
         UpdateResult updateResult = collection.updateOne(and(eq("did", did), eq("propertyKey", propertyKey)),
                 new Document("$set", doc),
@@ -170,7 +209,12 @@ public class MongodbPropertyCol {
         return updateResult;
     }
 
-    public void delProperty(String did, String propertyKey) {
-        collection.deleteOne(and(eq("did", did), exists(propertyKey)));
+    public UpdateResult delDidProperty(String did) {
+        UpdateResult updateResult = collection.updateMany(eq("did", did), Updates.set("didStatus", 0));
+        if (!MongodbUtil.isModified(updateResult)) {
+            logger.info("delDidProperty updateOne of did:" + did);
+        }
+        return updateResult;
+
     }
 }

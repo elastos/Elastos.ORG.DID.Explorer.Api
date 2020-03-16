@@ -1,6 +1,7 @@
 package org.elastos.util;
 
 import com.alibaba.fastjson.JSON;
+import org.elastos.constant.ServerResponseCode;
 
 public class ServerResponse {
     private int state;
@@ -36,5 +37,13 @@ public class ServerResponse {
 
     public String toJsonString(){
         return JSON.toJSONString(this);
+    }
+
+    public static String retOk(Object data) {
+        return new ServerResponse().setState(ServerResponseCode.SUCCESS).setData(data).toJsonString();
+    }
+
+    public static  String retErr(int state , String msg) {
+        return new ServerResponse().setState(state).setMsg(msg).toJsonString();
     }
 }

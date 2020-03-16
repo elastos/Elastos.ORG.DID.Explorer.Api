@@ -1,19 +1,35 @@
-package org.elastos.POJO;
+package org.elastos.entity;
 
-import java.util.Date;
+import javax.persistence.*;
 
-public class PropertyDoc {
+@Entity
+@Table(name="chain_did_app")
+public class ChainDidApp {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
+    @Column(name="did")
     String did;
-    Integer didStatus;
+    @Column(name="did_status")
+    String didStatus;
+    @Column(name="public_key")
     String publicKey;
+    @Column(name="property_key_status")
+    String propertyStatus;
+    @Column(name="property_key")
     String propertyKey;
+    @Column(name="property_value")
     String propertyValue;
+    @Column(name="info_type")
+    String infoType;
+    @Column(name="info_value")
+    String infoValue;
+    @Column(name="txid")
     String txid;
-    Integer status;
+    @Column(name="block_time")
     Integer blockTime;
+    @Column(name="height")
     Integer height;
-    Date localSystemTime;
 
     public Long getId() {
         return id;
@@ -31,11 +47,11 @@ public class PropertyDoc {
         this.did = did;
     }
 
-    public Integer getDidStatus() {
+    public String getDidStatus() {
         return didStatus;
     }
 
-    public void setDidStatus(Integer didStatus) {
+    public void setDidStatus(String didStatus) {
         this.didStatus = didStatus;
     }
 
@@ -45,6 +61,14 @@ public class PropertyDoc {
 
     public void setPublicKey(String publicKey) {
         this.publicKey = publicKey;
+    }
+
+    public String getPropertyStatus() {
+        return propertyStatus;
+    }
+
+    public void setPropertyStatus(String propertyStatus) {
+        this.propertyStatus = propertyStatus;
     }
 
     public String getPropertyKey() {
@@ -63,20 +87,28 @@ public class PropertyDoc {
         this.propertyValue = propertyValue;
     }
 
+    public String getInfoType() {
+        return infoType;
+    }
+
+    public void setInfoType(String infoType) {
+        this.infoType = infoType;
+    }
+
+    public String getInfoValue() {
+        return infoValue;
+    }
+
+    public void setInfoValue(String infoValue) {
+        this.infoValue = infoValue;
+    }
+
     public String getTxid() {
         return txid;
     }
 
     public void setTxid(String txid) {
         this.txid = txid;
-    }
-
-    public Integer getStatus() {
-        return status;
-    }
-
-    public void setStatus(Integer status) {
-        this.status = status;
     }
 
     public Integer getBlockTime() {
@@ -93,13 +125,5 @@ public class PropertyDoc {
 
     public void setHeight(Integer height) {
         this.height = height;
-    }
-
-    public Date getLocalSystemTime() {
-        return localSystemTime;
-    }
-
-    public void setLocalSystemTime(Date localSystemTime) {
-        this.localSystemTime = localSystemTime;
     }
 }

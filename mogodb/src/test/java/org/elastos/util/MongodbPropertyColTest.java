@@ -42,25 +42,25 @@ class MongodbPropertyColTest {
     }
     @Test
     void upsertProperty() {
-        Optional<ChainDidProperty> propertyOp = propertyOnChainRepository.findById(3L);
+        Optional<ChainDidProperty> propertyOp = propertyOnChainRepository.findById(9347275L);
         if (!propertyOp.isPresent()) {
             System.out.println("Err upsertProperty");
             return;
         }
 
         ChainDidProperty property = propertyOp.get();
+//
+//        propertyCol.upsertProperty(property);
+//
+//        property.setBlockTime(1548682163);
+//        property.setTxid("2497ed043e8c3f3f1a4cd8ad62d50bd617920d4e355e3efe34de3dc8d7107f1a");
+//        property.setHeight(47959);
+//
+//        propertyCol.upsertProperty(property);
 
-        propertyCol.upsertProperty(property);
-
-        property.setBlockTime(1548682163);
-        property.setTxid("2497ed043e8c3f3f1a4cd8ad62d50bd617920d4e355e3efe34de3dc8d7107f1a");
-        property.setHeight(47959);
-
-        propertyCol.upsertProperty(property);
-
-        property.setPropertyKey("TestStar2");
-        property.setBlockTime(1548672163);
-        property.setTxid("2497ed043e8c3f3f1a4cd8ad62d50bd617920d4e355e3efe34de3dc8d7107fee");
+        property.setPropertyKey("ds");
+        property.setBlockTime(null);
+        property.setTxid("");
         property.setHeight(47956);
 
         propertyCol.upsertProperty(property);
@@ -74,7 +74,7 @@ class MongodbPropertyColTest {
 
     @Test
     void findAllProperties() {
-        List<PropertyDoc> propertyDocs =  propertyCol.findAllProperties("iV8D3SfqUZUomodfmarPHdnfCScnNMgipJ");
+        List<PropertyDoc> propertyDocs =  propertyCol.findAllPropertiesOfDid("iV8D3SfqUZUomodfmarPHdnfCScnNMgipJ");
         System.out.println("property list:" + JSON.toJSONString(propertyDocs));
     }
 
