@@ -64,15 +64,6 @@ public class ElaDidMongoDbService {
         historyCol.addsertHistory(did, key, mysqlId);
     }
 
-    public void setPropertyList(List<ChainDidProperty> propertyList) {
-        setDidProperty(propertyList);
-        addDidPropertyHistory(propertyList.getDid(),
-                propertyList.getPropertyKey(), propertyList.getId());
-        updateDidTableId(propertyList.getId());
-        updateBlockHeight(propertyList.getHeight());
-        updateDidTxid(propertyList.getTxid());
-    }
-
     public void setProperty(ChainDidProperty property) {
         setDidProperty(property);
         addDidPropertyHistory(property.getDid(),
