@@ -24,7 +24,15 @@ public class SynchronousDataTask {
     private DidPropertyOnChainRepository didPropertyOnChainRepository;
 
     void initService(){
-        mysqlToMongodb();
+        List<ChainDidProperty> didProperties;
+        do {
+            Long id= elaDidMongoDbService.getCurrentDidTableId();
+            Sort sort = Sort.by(Sort.Direction.ASC, "id");
+            didProperties = didPropertyOnChainRepository.findFirst10000ByIdGreaterThan(id, sort);
+            elaDidMongoDbService.initByPropertyList(didProperties);
+        } while (!didProperties.isEmpty());
+        didProperties = didPropertyOnChainRepository.findAllByDidStatus(0);
+        elaDidMongoDbService.delDidList(didProperties);
         onFlag = true;
     }
 

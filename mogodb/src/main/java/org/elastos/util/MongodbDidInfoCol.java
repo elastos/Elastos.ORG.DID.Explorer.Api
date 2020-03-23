@@ -1,6 +1,7 @@
 package org.elastos.util;
 
 import com.mongodb.client.*;
+import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
@@ -28,6 +29,14 @@ public class MongodbDidInfoCol {
         return did;
     }
 
+    public MongoCollection<Document> getCollection() {
+        return collection;
+    }
+
+    public void setCollection(MongoCollection<Document> collection) {
+        this.collection = collection;
+    }
+
     //String did:,
     //String publicKey:;
     //Integer status:,
@@ -38,6 +47,11 @@ public class MongodbDidInfoCol {
         if (!MongodbUtil.isModified(updateResult)) {
             logger.info("upsertDidInfo updateMany of did:"+ did);
         }
+    }
+
+    public UpdateOneModel<Document> upsertDidInfoDoc(String did, String publicKey, Integer status) {
+        UpdateOneModel<Document> uom = new UpdateOneModel<>(eq("_id", did),combine(Updates.set("publicKey", publicKey),Updates.set("status", status)),new UpdateOptions().upsert(true));
+        return uom;
     }
 
     public DidDoc findDidInfo(String did){

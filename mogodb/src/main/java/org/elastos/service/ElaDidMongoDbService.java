@@ -1,5 +1,7 @@
 package org.elastos.service;
 
+import com.mongodb.client.model.WriteModel;
+import org.bson.Document;
 import org.elastos.POJO.DidDoc;
 import org.elastos.POJO.PropertyDoc;
 import org.elastos.conf.MongoDbConfiguration;
@@ -73,6 +75,75 @@ public class ElaDidMongoDbService {
         updateDidTxid(property.getTxid());
     }
 
+    public void delDidList(List<ChainDidProperty> propertyList) {
+        if (propertyList.isEmpty()) {
+            return;
+        }
+        List<WriteModel<Document>> request = new ArrayList<>();
+        for (ChainDidProperty property : propertyList) {
+            WriteModel<Document> doc = propertyCol.delDidPropertyDoc(property.getDid());
+            request.add(doc);
+        }
+        MongodbUtil.bulkWriteUpdate(propertyCol.getCollection(), request);
+    }
+
+    public void initByPropertyList(List<ChainDidProperty> propertyList) {
+        if (propertyList.isEmpty()) {
+            return;
+        }
+        List<WriteModel<Document>> didRequest = new ArrayList<>();
+        List<WriteModel<Document>> propertyRequest = new ArrayList<>();
+        List<WriteModel<Document>> historyRequest = new ArrayList<>();
+
+        Integer blockHeight = getCurrentBlockHeight();
+        Integer heightCount = getBlockHeightCount();
+        String didTxid = getDidTxid();
+        Integer txidCount = getDidTxidCount();
+
+        for (ChainDidProperty property : propertyList) {
+            WriteModel<Document> didDoc = didInfoCol.upsertDidInfoDoc(property.getDid(), property.getPublicKey(), property.getDidStatus());
+            if (null != didDoc) {
+                didRequest.add(didDoc);
+            }
+            WriteModel<Document> propertyDoc = propertyCol.upsertPropertyDoc(property);
+            if (null != propertyDoc) {
+                propertyRequest.add(propertyDoc);
+            }
+            WriteModel<Document> historyDoc = historyCol.addsertHistoryDoc(property.getDid(), property.getPropertyKey(), property.getId());
+            if (null != historyDoc) {
+                historyRequest.add(historyDoc);
+            }
+
+            Integer height = property.getHeight();
+            if (blockHeight < height) {
+                blockHeight = height;
+                heightCount++;
+            }
+
+            String txid = property.getTxid();
+            if (!txid.equals(didTxid)) {
+                didTxid = txid;
+                txidCount++;
+            }
+        }
+        WriteModel<Document> doc = propertyCol.updateDidTableIdDoc(propertyList.get(propertyList.size() - 1).getId());
+        propertyRequest.add(doc);
+        doc = propertyCol.updateBlockHeightDoc(blockHeight);
+        propertyRequest.add(doc);
+        doc = propertyCol.updateBlockHeightCountDoc(heightCount);
+        propertyRequest.add(doc);
+        doc = propertyCol.updateDidTxidDoc(didTxid);
+        propertyRequest.add(doc);
+        doc = propertyCol.updateDidTxidCountDoc(txidCount);
+        propertyRequest.add(doc);
+
+        MongodbUtil.bulkWriteUpdate(didInfoCol.getCollection(), didRequest);
+        MongodbUtil.bulkWriteUpdate(propertyCol.getCollection(), propertyRequest);
+        MongodbUtil.bulkWriteUpdate(historyCol.getCollection(), historyRequest);
+
+        updateDidTableId(propertyList.get(propertyList.size() - 1).getId());
+    }
+
     private RetResult<DidDoc> findDidDoc(String did) {
         DidDoc didDoc = didInfoCol.findDidInfo(did);
         if (didDoc == null) {
@@ -86,7 +157,7 @@ public class ElaDidMongoDbService {
         return RetResult.retOk(didDoc);
     }
 
-    private ChainDidProperty docToDidProperty(PropertyDoc propertyDoc ){
+    private ChainDidProperty docToDidProperty(PropertyDoc propertyDoc) {
         ChainDidProperty didProperty = new ChainDidProperty();
         didProperty.setDid(propertyDoc.getDid());
         didProperty.setDidStatus(propertyDoc.getDidStatus());
@@ -103,14 +174,13 @@ public class ElaDidMongoDbService {
     }
 
     public RetResult<List<ChainDidProperty>> getPropertiesOfDid(String did) {
-        RetResult<DidDoc> didDocRetResult = findDidDoc (did);
+        RetResult<DidDoc> didDocRetResult = findDidDoc(did);
         if (didDocRetResult.getCode() != RetCode.SUCC) {
             return RetResult.retErr(didDocRetResult.getCode(), didDocRetResult.getMsg());
         }
-        DidDoc didDoc = didDocRetResult.getData();
-        List < PropertyDoc > propertyDocs = propertyCol.findAllPropertiesOfDid(did);
+        List<PropertyDoc> propertyDocs = propertyCol.findAllPropertiesOfDid(did);
         List<ChainDidProperty> chainDidPropertyList = new ArrayList<>();
-        for (PropertyDoc propertyDoc: propertyDocs) {
+        for (PropertyDoc propertyDoc : propertyDocs) {
             ChainDidProperty property = docToDidProperty(propertyDoc);
             chainDidPropertyList.add(property);
         }
@@ -118,19 +188,19 @@ public class ElaDidMongoDbService {
         return RetResult.retOk(chainDidPropertyList);
     }
 
-    public RetResult<List<ChainDidProperty>> getProperties(String propertyKey){
-        List < PropertyDoc > propertyDocs = propertyCol.findProperties(propertyKey);
+    public RetResult<List<ChainDidProperty>> getProperties(String propertyKey) {
+        List<PropertyDoc> propertyDocs = propertyCol.findProperties(propertyKey);
         return filterDidPropertyList(propertyDocs);
     }
 
-    public RetResult<List<ChainDidProperty>> getPropertiesLike(String propertyKeyLike){
-        List < PropertyDoc > propertyDocs = propertyCol.findPropertiesLike(propertyKeyLike);
+    public RetResult<List<ChainDidProperty>> getPropertiesLike(String propertyKeyLike) {
+        List<PropertyDoc> propertyDocs = propertyCol.findPropertiesLike(propertyKeyLike);
         return filterDidPropertyList(propertyDocs);
     }
 
     private RetResult<List<ChainDidProperty>> filterDidPropertyList(List<PropertyDoc> propertyDocs) {
         List<ChainDidProperty> chainDidPropertyList = new ArrayList<>();
-        for (PropertyDoc propertyDoc: propertyDocs) {
+        for (PropertyDoc propertyDoc : propertyDocs) {
             if (propertyDoc.getDidStatus() == 0) {
                 continue;
             }
@@ -142,7 +212,7 @@ public class ElaDidMongoDbService {
     }
 
     public RetResult<ChainDidProperty> getProperty(String did, String propertyKey) {
-        RetResult<DidDoc> didDocRetResult = findDidDoc (did);
+        RetResult<DidDoc> didDocRetResult = findDidDoc(did);
         if (didDocRetResult.getCode() != RetCode.SUCC) {
             return RetResult.retErr(didDocRetResult.getCode(), didDocRetResult.getMsg());
         }
@@ -157,14 +227,14 @@ public class ElaDidMongoDbService {
     }
 
     public RetResult<List<ChainDidProperty>> getPropertyLike(String did, String propertyKeyLike) {
-        RetResult<DidDoc> didDocRetResult = findDidDoc (did);
+        RetResult<DidDoc> didDocRetResult = findDidDoc(did);
         if (didDocRetResult.getCode() != RetCode.SUCC) {
             return RetResult.retErr(didDocRetResult.getCode(), didDocRetResult.getMsg());
         }
 
         List<PropertyDoc> propertyDocs = propertyCol.findPropertiesLike(did, propertyKeyLike);
         List<ChainDidProperty> chainDidPropertyList = new ArrayList<>();
-        for (PropertyDoc propertyDoc: propertyDocs) {
+        for (PropertyDoc propertyDoc : propertyDocs) {
             ChainDidProperty property = docToDidProperty(propertyDoc);
             chainDidPropertyList.add(property);
         }
@@ -173,7 +243,7 @@ public class ElaDidMongoDbService {
     }
 
     public RetResult<List<Long>> getPropertyHistoryIds(String did, String propertyKey) {
-        RetResult<DidDoc> didDocRetResult = findDidDoc (did);
+        RetResult<DidDoc> didDocRetResult = findDidDoc(did);
         if (didDocRetResult.getCode() != RetCode.SUCC) {
             return RetResult.retErr(didDocRetResult.getCode(), didDocRetResult.getMsg());
         }
@@ -198,7 +268,7 @@ public class ElaDidMongoDbService {
     }
 
     private void updateBlockHeight(Integer height) {
-        Integer blockHeight  = getCurrentBlockHeight();
+        Integer blockHeight = getCurrentBlockHeight();
         if (blockHeight < height) {
             propertyCol.updateBlockHeight(height);
             propertyCol.incBlockHeightCount();
@@ -209,7 +279,7 @@ public class ElaDidMongoDbService {
         return propertyCol.findBlockHeight();
     }
 
-    public Integer getBlockHeightCount(){
+    public Integer getBlockHeightCount() {
         return propertyCol.findBlockHeightCount();
     }
 
@@ -225,7 +295,7 @@ public class ElaDidMongoDbService {
         return propertyCol.findDidTxid();
     }
 
-    public Integer getDidTxidCount(){
+    public Integer getDidTxidCount() {
         return propertyCol.findDidTxidCount();
     }
 

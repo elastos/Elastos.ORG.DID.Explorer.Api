@@ -1,6 +1,7 @@
 package org.elastos.util;
 
 import com.mongodb.client.*;
+import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.Updates;
 import com.mongodb.client.result.UpdateResult;
@@ -25,6 +26,14 @@ public class MongodbPropertyHistoryCol {
         collection.createIndex(did);
         Document propertyKey = new Document("propertyKey", 1);
         collection.createIndex(propertyKey);
+    }
+
+    public MongoCollection<Document> getCollection() {
+        return collection;
+    }
+
+    public void setCollection(MongoCollection<Document> collection) {
+        this.collection = collection;
     }
 
     public void delHistory(String did, String propertyKey) {
@@ -57,5 +66,12 @@ public class MongodbPropertyHistoryCol {
                     + "exception msg:" + e.getMessage());
             return null;
         }
+    }
+
+    public UpdateOneModel<Document> addsertHistoryDoc(String did, String propertyKey, Long id) {
+        UpdateOneModel<Document> uom = new UpdateOneModel<>(and(eq("did", did), exists(propertyKey)),
+                Updates.addToSet(propertyKey, id),
+                new UpdateOptions().upsert(true));
+        return uom;
     }
 }

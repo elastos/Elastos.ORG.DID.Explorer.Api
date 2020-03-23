@@ -1,8 +1,8 @@
 package org.elastos.util;
 
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.*;
-import com.mongodb.client.model.UpdateOptions;
-import com.mongodb.client.model.Updates;
+import com.mongodb.client.model.*;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
 import org.elastos.POJO.PropertyDoc;
@@ -27,12 +27,26 @@ public class MongodbPropertyCol {
     private String didTxidCountField = "did_txid_count";
     private MongoCollection<Document> collection;
 
+    public MongoCollection<Document> getCollection() {
+        return collection;
+    }
+
+    public void setCollection(MongoCollection<Document> collection) {
+        this.collection = collection;
+    }
+
     public void init(MongoCollection<Document> var) {
         collection = var;
         Document did = new Document("did", 1);
         collection.createIndex(did);
         Document propertyKey = new Document("propertyKey", 1);
         collection.createIndex(propertyKey);
+    }
+
+    public UpdateOneModel<Document> updateDidTableIdDoc(Long id) {
+        UpdateOneModel<Document> uom = new UpdateOneModel<Document>(exists(didTableIdField),
+                set(didTableIdField, id), new UpdateOptions().upsert(true));
+        return uom;
     }
 
     public UpdateResult updateDidTableId(Long id) {
@@ -50,6 +64,12 @@ public class MongodbPropertyCol {
         }
     }
 
+    public UpdateOneModel<Document> updateBlockHeightDoc(Integer blockHeight) {
+        UpdateOneModel<Document> uom = new UpdateOneModel<Document>(exists(blockHeightField),
+                set(blockHeightField, blockHeight), new UpdateOptions().upsert(true));
+        return uom;
+    }
+
     public UpdateResult updateBlockHeight(Integer blockHeight) {
         UpdateResult ret = collection.updateOne(exists(blockHeightField),
                 set(blockHeightField, blockHeight), new UpdateOptions().upsert(true));
@@ -65,6 +85,12 @@ public class MongodbPropertyCol {
         }
     }
 
+    public UpdateOneModel<Document> updateBlockHeightCountDoc(Integer count) {
+        UpdateOneModel<Document> uom = new UpdateOneModel<>( exists(blockHeightCountField),
+                Updates.set(blockHeightCountField, count), new UpdateOptions().upsert(true));
+        return uom;
+    }
+
     public UpdateResult incBlockHeightCount() {
         UpdateResult ret = collection.updateOne(exists(blockHeightCountField),
                 Updates.inc(blockHeightCountField, 1), new UpdateOptions().upsert(true));
@@ -72,12 +98,18 @@ public class MongodbPropertyCol {
     }
 
     public Integer findBlockHeightCount() {
-        Document doc = collection.find(exists(blockHeightField)).first();
+        Document doc = collection.find(exists(blockHeightCountField)).first();
         if (null != doc) {
-            return doc.getInteger(blockHeightField);
+            return doc.getInteger(blockHeightCountField);
         } else {
             return 0;
         }
+    }
+
+    public UpdateOneModel<Document> updateDidTxidDoc(String txid) {
+        UpdateOneModel<Document> uom = new UpdateOneModel<>( exists(didTxidField),
+                Updates.set(didTxidField, txid), new UpdateOptions().upsert(true));
+        return uom;
     }
 
     public UpdateResult updateDidTxid(String txid) {
@@ -93,6 +125,12 @@ public class MongodbPropertyCol {
         } else {
             return "";
         }
+    }
+
+    public UpdateOneModel<Document> updateDidTxidCountDoc(Integer count) {
+        UpdateOneModel<Document> uom = new UpdateOneModel<>( exists(didTxidCountField),
+                Updates.set(didTxidCountField, count), new UpdateOptions().upsert(true));
+        return uom;
     }
 
     public UpdateResult incDidTxidCount() {
@@ -208,12 +246,30 @@ public class MongodbPropertyCol {
         return updateResult;
     }
 
+    public UpdateOneModel<Document> upsertPropertyDoc(ChainDidProperty property) {
+        String did = property.getDid();
+        String propertyKey = property.getPropertyKey();
+        if ((null == propertyKey) || ("".equals(propertyKey))) {
+            logger.info("upsertProperty updateOne of did:" + did + " property key is null");
+            return null;
+        }
+        Document doc = ChainPropertyToDoc(property);
+        UpdateOneModel<Document> uom = new UpdateOneModel<>(and(eq("did", did), eq("propertyKey", propertyKey)),
+                new Document("$set", doc),
+                new UpdateOptions().upsert(true));
+        return uom;
+    }
+
+    public UpdateManyModel<Document> delDidPropertyDoc(String did) {
+        UpdateManyModel<Document> uom = new UpdateManyModel<Document>(eq("did", did), Updates.set("didStatus", 0));
+        return uom;
+    }
+
     public UpdateResult delDidProperty(String did) {
         UpdateResult updateResult = collection.updateMany(eq("did", did), Updates.set("didStatus", 0));
         if (!MongodbUtil.isModified(updateResult)) {
             logger.info("delDidProperty updateOne of did:" + did);
         }
         return updateResult;
-
     }
 }

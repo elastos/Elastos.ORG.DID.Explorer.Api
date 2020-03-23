@@ -17,6 +17,10 @@ public interface DidPropertyOnChainRepository extends JpaRepository<ChainDidProp
 
     List<ChainDidProperty> findFirst100ByIdGreaterThan(Long start, Sort sort);
 
+    List<ChainDidProperty> findFirst10000ByIdGreaterThan(Long start, Sort sort);
+
+    List<ChainDidProperty> findAllByDidStatus(Integer status);
+
     List<ChainDidProperty> findAllByTxid(String txid);
 
     @Query(nativeQuery = true, value = "SELECT * FROM `chain_did_property` ORDER BY `id` desc LIMIT 1")
