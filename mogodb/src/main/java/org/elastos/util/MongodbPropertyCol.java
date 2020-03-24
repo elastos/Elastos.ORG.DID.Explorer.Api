@@ -86,7 +86,7 @@ public class MongodbPropertyCol {
     }
 
     public UpdateOneModel<Document> updateBlockHeightCountDoc(Integer count) {
-        UpdateOneModel<Document> uom = new UpdateOneModel<>( exists(blockHeightCountField),
+        UpdateOneModel<Document> uom = new UpdateOneModel<>(exists(blockHeightCountField),
                 Updates.set(blockHeightCountField, count), new UpdateOptions().upsert(true));
         return uom;
     }
@@ -107,7 +107,7 @@ public class MongodbPropertyCol {
     }
 
     public UpdateOneModel<Document> updateDidTxidDoc(String txid) {
-        UpdateOneModel<Document> uom = new UpdateOneModel<>( exists(didTxidField),
+        UpdateOneModel<Document> uom = new UpdateOneModel<>(exists(didTxidField),
                 Updates.set(didTxidField, txid), new UpdateOptions().upsert(true));
         return uom;
     }
@@ -128,7 +128,7 @@ public class MongodbPropertyCol {
     }
 
     public UpdateOneModel<Document> updateDidTxidCountDoc(Integer count) {
-        UpdateOneModel<Document> uom = new UpdateOneModel<>( exists(didTxidCountField),
+        UpdateOneModel<Document> uom = new UpdateOneModel<>(exists(didTxidCountField),
                 Updates.set(didTxidCountField, count), new UpdateOptions().upsert(true));
         return uom;
     }
@@ -209,7 +209,7 @@ public class MongodbPropertyCol {
         return propertyDoc;
     }
 
-    private Document ChainPropertyToDoc(ChainDidProperty property) {
+    private Document chainPropertyToDoc(ChainDidProperty property) {
         Document propertyDoc = new Document("id", property.getId())
                 .append(property.getPropertyKey(), property.getPropertyValue())
                 .append("didStatus", property.getDidStatus())
@@ -232,11 +232,7 @@ public class MongodbPropertyCol {
     public UpdateResult upsertProperty(ChainDidProperty property) {
         String did = property.getDid();
         String propertyKey = property.getPropertyKey();
-        if ((null == propertyKey) || ("".equals(propertyKey))) {
-            logger.info("upsertProperty updateOne of did:" + did + " property key is null");
-            return null;
-        }
-        Document doc = ChainPropertyToDoc(property);
+        Document doc = chainPropertyToDoc(property);
         UpdateResult updateResult = collection.updateOne(and(eq("did", did), eq("propertyKey", propertyKey)),
                 new Document("$set", doc),
                 new UpdateOptions().upsert(true));
@@ -249,11 +245,7 @@ public class MongodbPropertyCol {
     public UpdateOneModel<Document> upsertPropertyDoc(ChainDidProperty property) {
         String did = property.getDid();
         String propertyKey = property.getPropertyKey();
-        if ((null == propertyKey) || ("".equals(propertyKey))) {
-            logger.info("upsertProperty updateOne of did:" + did + " property key is null");
-            return null;
-        }
-        Document doc = ChainPropertyToDoc(property);
+        Document doc = chainPropertyToDoc(property);
         UpdateOneModel<Document> uom = new UpdateOneModel<>(and(eq("did", did), eq("propertyKey", propertyKey)),
                 new Document("$set", doc),
                 new UpdateOptions().upsert(true));

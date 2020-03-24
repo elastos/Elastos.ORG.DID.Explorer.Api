@@ -67,6 +67,9 @@ public class ElaDidMongoDbService {
     }
 
     public void setProperty(ChainDidProperty property) {
+        if(MongodbUtil.isChainPropertyBlank(property)){
+            return;
+        }
         setDidProperty(property);
         addDidPropertyHistory(property.getDid(),
                 property.getPropertyKey(), property.getId());
@@ -101,13 +104,21 @@ public class ElaDidMongoDbService {
         Integer txidCount = getDidTxidCount();
 
         for (ChainDidProperty property : propertyList) {
+            if(MongodbUtil.isChainPropertyBlank(property)){
+                continue;
+            }
+
             WriteModel<Document> didDoc = didInfoCol.upsertDidInfoDoc(property.getDid(), property.getPublicKey(), property.getDidStatus());
             if (null != didDoc) {
                 didRequest.add(didDoc);
+            } else {
+                continue;
             }
             WriteModel<Document> propertyDoc = propertyCol.upsertPropertyDoc(property);
             if (null != propertyDoc) {
                 propertyRequest.add(propertyDoc);
+            } else {
+                continue;
             }
             WriteModel<Document> historyDoc = historyCol.addsertHistoryDoc(property.getDid(), property.getPropertyKey(), property.getId());
             if (null != historyDoc) {
