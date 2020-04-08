@@ -117,13 +117,13 @@ public class ExplorerWebController {
         return explorerWebService.findTransactionsDid(did);
     }
 
-    @RequestMapping(value = {"properteis/did"}, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = {"properties/did"}, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public String findPropertiesDid(@RequestParam(required = true, name = "did") String did) {
         return explorerWebService.findPropertiesDid(did);
     }
 
-    @RequestMapping(value = {"properteis/history"}, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = {"properties/history"}, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public String findPropertiesHistory(@RequestParam(required = true, name = "did") String did,
                                         @RequestParam(required = true, name = "key") String key,
@@ -132,7 +132,7 @@ public class ExplorerWebController {
         return explorerWebService.findPropertiesHistory(did, key, start, pageSize);
     }
 
-    @RequestMapping(value = {"properteis/history/count"}, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = {"properties/history/count"}, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public String findPropertiesHistory(@RequestParam(required = true, name = "did") String did,
                                         @RequestParam(required = true, name = "key") String key){

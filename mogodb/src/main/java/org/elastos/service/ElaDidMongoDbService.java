@@ -1,5 +1,6 @@
 package org.elastos.service;
 
+import com.alibaba.fastjson.JSON;
 import com.mongodb.client.model.WriteModel;
 import org.bson.Document;
 import org.elastos.POJO.DidDoc;
@@ -14,7 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -147,10 +150,14 @@ public class ElaDidMongoDbService {
         propertyRequest.add(doc);
         doc = propertyCol.updateDidTxidCountDoc(txidCount);
         propertyRequest.add(doc);
-
-        MongodbUtil.bulkWriteUpdate(didInfoCol.getCollection(), didRequest);
-        MongodbUtil.bulkWriteUpdate(propertyCol.getCollection(), propertyRequest);
-        MongodbUtil.bulkWriteUpdate(historyCol.getCollection(), historyRequest);
+        try {
+            MongodbUtil.bulkWriteUpdate(didInfoCol.getCollection(), didRequest);
+            MongodbUtil.bulkWriteUpdate(propertyCol.getCollection(), propertyRequest);
+            MongodbUtil.bulkWriteUpdate(historyCol.getCollection(), historyRequest);
+        } catch (Exception e) {
+            logger.error("initByPropertyList exception:"+ e.getMessage()+ " id:"
+                    + propertyList.get(0).getId());
+        }
 
         updateDidTableId(propertyList.get(propertyList.size() - 1).getId());
     }
@@ -308,6 +315,24 @@ public class ElaDidMongoDbService {
 
     public Integer getDidTxidCount() {
         return propertyCol.findDidTxidCount();
+    }
+
+    public String getDidSum(){
+        long count = didInfoCol.getDidSum();
+        Map<String, Object> data = new HashMap<>();
+        data.put("count", count);
+        return JSON.toJSONString(data);
+    }
+
+    public String getDidList(int start, int size) {
+        List<String> didList = didInfoCol.getDidList(start, size);
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (String did : didList) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("did", did);
+            result.add(data);
+        }
+        return JSON.toJSONString(result);
     }
 
 }

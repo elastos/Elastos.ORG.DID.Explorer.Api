@@ -9,10 +9,15 @@ package org.elastos.controller;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import org.elastos.service.ElaDidChainService;
+import org.elastos.service.ElaDidMongoDbService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import sun.jvm.hotspot.opto.HaltNode;
 
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -22,6 +27,9 @@ public class ElaDidChainController {
 
     @Autowired
     private ElaDidChainService didChainService;
+
+    @Autowired
+    private ElaDidMongoDbService elaDidMongoDbService;
 
     @RequestMapping(value = {"did/{did}"}, method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
@@ -85,6 +93,28 @@ public class ElaDidChainController {
     @ResponseBody
     public String getPropertiesCrossDID(@RequestParam(name = "appid") String appId) {
         return didChainService.getPropertiesOfAppId(appId);
+    }
+
+    @RequestMapping(value = "serverInfo", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String getServerInfo() {
+        Date time = new Date();
+        Map<String, Object> data = new HashMap<>();
+        data.put("code", 1);
+        data.put("s_time", time.getTime());
+        return JSON.toJSONString(data);
+    }
+
+    @RequestMapping(value = "dids/count", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String getDidSum() {
+        return elaDidMongoDbService.getDidSum();
+    }
+
+    @RequestMapping(value = "dids", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String getDidList(@RequestParam(name = "start") Integer start, @RequestParam(name = "pageSize") Integer pageSize ) {
+        return elaDidMongoDbService.getDidList(start, pageSize);
     }
 
     @RequestMapping(value = "cache", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_UTF8_VALUE)
