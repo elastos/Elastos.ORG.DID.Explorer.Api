@@ -53,6 +53,13 @@ public class ElaDidChainController {
         return didChainService.getDidPropertyHistory(did, propertyKey, page, size);
     }
 
+    @RequestMapping(value = "did/{did}/property_history/count", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String getDIDPropertyHistoryCount(@PathVariable("did") String did,
+                                        @RequestParam(name = "key") String propertyKey) {
+        return didChainService.getDIDPropertyHistoryCount(did, propertyKey);
+    }
+
     @RequestMapping(value = "did/{did}/property_like", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public String getDIDPropertyLike(@PathVariable("did") String did,
@@ -77,6 +84,12 @@ public class ElaDidChainController {
                                         @RequestParam(required = false, name = "page") Integer page,
                                         @RequestParam(required = false, name = "size") Integer size) {
         return didChainService.getPropertiesCrossDID(propertyKey, page, size);
+    }
+
+    @RequestMapping(value = "property/count", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String getPropertiesCrossDidCount(@RequestParam(name = "key") String propertyKey) {
+        return didChainService.getPropertiesCrossDidCount(propertyKey);
     }
 
     @RequestMapping(value = "property_like", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)

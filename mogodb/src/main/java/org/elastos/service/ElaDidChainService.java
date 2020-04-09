@@ -27,7 +27,9 @@ import org.springframework.stereotype.Service;
 
 import javax.xml.bind.DatatypeConverter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ElaDidChainService {
@@ -83,6 +85,20 @@ public class ElaDidChainService {
         return ServerResponse.retOk(ListPage(properties, page, size));
     }
 
+    public String getDIDPropertyHistoryCount(String did, String propertyKey) {
+        RetResult<List<Long>> ret = elaDidMongoDbService.getPropertyHistoryIds(did, propertyKey);
+        if (ret.getCode() != RetCode.SUCC) {
+            return ServerResponse.retOk("");
+        } else {
+            int count = ret.getData().size();
+            Map<String, Object> data = new HashMap<>();
+            data.put("count", count);
+            List<Map<String, Object>> r = new ArrayList<>();
+            r.add(data);
+            return JSON.toJSONString(r);
+        }
+    }
+
     public String getDIDPropertyLike(String did, String propertyKeyLike, Integer page, Integer size) {
         RetResult<List<ChainDidProperty>> ret = elaDidMongoDbService.getPropertyLike(did, propertyKeyLike);
         if (ret.getCode() != RetCode.SUCC) {
@@ -123,6 +139,20 @@ public class ElaDidChainService {
 
         List<ChainDidProperty> didProperties = ret.getData();
         return ServerResponse.retOk(ListPage(didProperties, page, size));
+    }
+
+    public String getPropertiesCrossDidCount(String propertyKey) {
+        RetResult<List<ChainDidProperty>> ret = elaDidMongoDbService.getProperties(propertyKey);
+        if (ret.getCode() != RetCode.SUCC) {
+            return ServerResponse.retOk("");
+        }
+
+        int count =  ret.getData().size();
+        Map<String, Object> data = new HashMap<>();
+        data.put("count", count);
+        List<Map<String, Object>> r = new ArrayList<>();
+        r.add(data);
+        return JSON.toJSONString(r);
     }
 
     public String getPropertiesLikeCrossDID(String propertyKeyLike, Integer page, Integer size) {
