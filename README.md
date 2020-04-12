@@ -197,7 +197,7 @@ It response like:
 ### Get properties which has the same property_key 
 ```yaml
 HTTP: GET
-URL: /api/1/didexplorer/property?key={key_name}[&page={page_number}&size={size_number}]
+URL: /api/2/didexplorer/property?key={key_name}[&page={page_number}&size={size_number}]
 HEADERS:
     Content-Type: application/json
 return:
